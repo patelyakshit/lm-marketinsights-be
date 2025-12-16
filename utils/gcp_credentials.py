@@ -26,6 +26,59 @@ CREDENTIALS_DIR = Path("/tmp")
 CREDENTIALS_FILE = CREDENTIALS_DIR / "gcp_credentials.json"
 
 
+def fix_private_key_newlines(private_key: str) -> str:
+    """
+    Fix private_key newlines that may be escaped in various ways.
+
+    When JSON is pasted into Railway/Heroku env vars, newlines can be:
+    - Literal \\n (needs to become actual newline)
+    - Already correct actual newlines
+    - Mixed escaping
+
+    Returns:
+        str: Private key with proper newlines
+    """
+    original = private_key
+
+    # Pattern 1: Literal backslash-n (most common in Railway)
+    # In Python, "\\n" represents a literal backslash followed by 'n'
+    if "\\n" in private_key:
+        private_key = private_key.replace("\\n", "\n")
+        logger.info("  Fixed \\\\n -> newline")
+
+    # Pattern 2: Double-escaped (\\\\n in the raw string)
+    if "\\\\n" in private_key:
+        private_key = private_key.replace("\\\\n", "\n")
+        logger.info("  Fixed \\\\\\\\n -> newline")
+
+    # Pattern 3: Raw backslash followed by 'n' character (appears as r'\n')
+    # Check if the key has the proper PEM structure after fixes
+    if "-----BEGIN" in private_key and "\n" not in private_key:
+        # No newlines at all - try to fix common patterns
+        private_key = private_key.replace("\\n", "\n")
+        logger.info("  Forced newline conversion (no newlines found)")
+
+    # Validate PEM structure
+    if "-----BEGIN PRIVATE KEY-----" in private_key:
+        # Count newlines - a valid PEM should have multiple
+        newline_count = private_key.count("\n")
+        logger.info(f"  Private key has {newline_count} newlines")
+
+        # Log first part of key for debugging (safe - just the header)
+        key_preview = private_key[:50].replace("\n", "\\n")
+        logger.info(f"  Key preview: {key_preview}...")
+    else:
+        logger.warning("  Private key doesn't contain expected PEM header!")
+        # Log what we see at the start
+        key_start = repr(private_key[:60])
+        logger.warning(f"  Key starts with: {key_start}")
+
+    if private_key != original:
+        logger.info("  Private key newlines were fixed")
+
+    return private_key
+
+
 def create_credentials_from_env() -> bool:
     """
     Create credentials file from GOOGLE_APPLICATION_CREDENTIALS_JSON env var.
@@ -38,17 +91,21 @@ def create_credentials_from_env() -> bool:
     if not json_creds:
         return False
 
+    # Log raw input info for debugging
+    logger.info(f"  Raw env var length: {len(json_creds)} chars")
+
     try:
         # Validate it's valid JSON
         creds_dict = json.loads(json_creds)
 
-        # Fix private_key: Railway/env vars may have literal \n instead of actual newlines
+        logger.info(f"  Parsed JSON keys: {list(creds_dict.keys())}")
+
+        # Fix private_key newlines
         if "private_key" in creds_dict:
-            private_key = creds_dict["private_key"]
-            # Replace literal \n with actual newlines if needed
-            if "\\n" in private_key:
-                creds_dict["private_key"] = private_key.replace("\\n", "\n")
-                logger.info("  Fixed escaped newlines in private_key")
+            creds_dict["private_key"] = fix_private_key_newlines(creds_dict["private_key"])
+        else:
+            logger.error("  No 'private_key' found in credentials!")
+            return False
 
         # Ensure directory exists
         CREDENTIALS_DIR.mkdir(parents=True, exist_ok=True)
@@ -62,13 +119,19 @@ def create_credentials_from_env() -> bool:
 
         logger.info(f"✓ Created GCP credentials from GOOGLE_APPLICATION_CREDENTIALS_JSON env var")
         logger.info(f"  File: {CREDENTIALS_FILE}")
+        logger.info(f"  File size: {CREDENTIALS_FILE.stat().st_size} bytes")
         return True
 
     except json.JSONDecodeError as e:
         logger.error(f"✗ Invalid JSON in GOOGLE_APPLICATION_CREDENTIALS_JSON: {e}")
+        # Log a preview of the raw value for debugging
+        preview = json_creds[:100] if len(json_creds) > 100 else json_creds
+        logger.error(f"  JSON preview: {repr(preview)}...")
         return False
     except Exception as e:
         logger.error(f"✗ Error creating credentials from env var: {e}")
+        import traceback
+        logger.error(traceback.format_exc())
         return False
 
 
