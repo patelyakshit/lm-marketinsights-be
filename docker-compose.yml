@@ -1,0 +1,19 @@
+services:
+  # Development service
+  bumblebee-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: bash -c "uvicorn main:app --reload --host 0.0.0.0 --port 8000"
+    volumes:
+      - .:/app
+      - ./media:/app/media
+      - ./logs:/app/logs
+    ports:
+      - "8000:8000"
+    environment:
+      - ENVIRONMENT=development
+      - PYTHONPATH=/app
+    env_file:
+      - .env
+    restart: unless-stopped

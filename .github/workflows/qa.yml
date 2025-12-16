@@ -1,0 +1,46 @@
+
+name: deploy_qa
+on:
+  push:
+    branches:
+      - qa
+
+env:
+  REGISTRY_NAME: lmproductqa
+  NAMESPACE: lm-multi-agent-api-qa
+
+jobs:
+  build-image-and-push-to-acr:
+    name: Build and Push Image
+    runs-on: ubuntu-24.04
+    steps:
+
+      # Checkout Repository
+      - uses: actions/checkout@master
+
+      # Connect to Azure Container registry (ACR)
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY_NAME }}.azurecr.io
+          username: ${{ secrets.QA_REGISTRY_USERNAME }}
+          password: ${{ secrets.QA_REGISTRY_PASSWORD }}
+
+      # Container build and push to a Azure Container registry (ACR)
+      - run: |
+          docker buildx build --platform linux/amd64 ./ -t ${{ env.REGISTRY_NAME }}.azurecr.io/lm-multi-agent-api-qa:${{ github.sha }} -t ${{ env.REGISTRY_NAME }}.azurecr.io/lm-multi-agent-api-qa:latest
+          docker push ${{ env.REGISTRY_NAME }}.azurecr.io/lm-multi-agent-api-qa:${{ github.sha }}
+          docker push ${{ env.REGISTRY_NAME }}.azurecr.io/lm-multi-agent-api-qa:latest
+
+  deploy-to-azure-app-service:
+    name: Deploy Image
+    runs-on: ubuntu-24.04
+    needs: build-image-and-push-to-acr
+    steps:
+      - name: Azure CLI Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS_GITHUB_ACTION_PRINCIPLE }}
+
+      - name: Restart ACI lm-multi-agent-api-qa Instance
+        run: |
+          az webapp restart --resource-group lm-product-qa --name lm-multi-agent-api-qa

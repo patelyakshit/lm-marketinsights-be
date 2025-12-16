@@ -1,0 +1,785 @@
+{
+  "version": "2025",
+  "total_segments": 61,
+  "lifemode_groups": 13,
+  "segments": {
+    "1A": {
+      "code": "1A",
+      "name": "Top Tier",
+      "lifemode_group": "Affluent Estates",
+      "lifemode_code": "L1",
+      "urbanization": "Principal Urban Centers",
+      "overview": "The wealthiest Tapestry segment, Top Tier residents are highly educated professionals who live in exclusive neighborhoods. They have the highest incomes and net worth of any segment.",
+      "demographics": {
+        "median_age": 45.2,
+        "median_household_income": 215000,
+        "median_net_worth": 1200000,
+        "average_household_size": 2.8,
+        "homeownership_rate": 0.89,
+        "education_bachelors_plus": 0.78
+      },
+      "characteristics": [
+        "Highest income and net worth",
+        "Live in exclusive neighborhoods",
+        "Highly educated professionals",
+        "Own luxury vehicles",
+        "Invest heavily in financial markets"
+      ],
+      "consumer_preferences": {
+        "shopping": ["High-end department stores", "Luxury brands", "Online shopping"],
+        "media": ["Business publications", "Streaming services", "Podcasts"],
+        "dining": ["Fine dining", "Organic/specialty foods", "Wine enthusiasts"],
+        "travel": ["International travel", "Luxury resorts", "First-class flights"]
+      },
+      "marketing_recommendations": [
+        "Focus on exclusivity and premium quality",
+        "Use sophisticated, professional messaging",
+        "Digital marketing through premium channels",
+        "Personalized service experiences"
+      ],
+      "business_implications": {
+        "retail": "Premium products with exceptional service",
+        "financial": "Wealth management, investment services",
+        "real_estate": "Luxury properties, second homes",
+        "automotive": "Luxury and premium vehicles"
+      }
+    },
+    "1B": {
+      "code": "1B",
+      "name": "Professional Pride",
+      "lifemode_group": "Affluent Estates",
+      "lifemode_code": "L1",
+      "urbanization": "Suburban Periphery",
+      "overview": "Professional Pride residents are successful executives and professionals living in newer suburban neighborhoods. Well-educated couples with high incomes who prioritize education and career advancement.",
+      "demographics": {
+        "median_age": 42.5,
+        "median_household_income": 165000,
+        "median_net_worth": 650000,
+        "average_household_size": 3.1,
+        "homeownership_rate": 0.85,
+        "education_bachelors_plus": 0.72
+      },
+      "characteristics": [
+        "Dual-income professional households",
+        "Children in private schools",
+        "Active in community organizations",
+        "Health and fitness conscious",
+        "Tech-savvy early adopters"
+      ],
+      "consumer_preferences": {
+        "shopping": ["Quality over price", "Brand conscious", "Online research"],
+        "media": ["Streaming services", "News apps", "Social media"],
+        "dining": ["Family restaurants", "Meal kit services", "Healthy options"],
+        "travel": ["Family vacations", "Educational trips", "Domestic resorts"]
+      },
+      "marketing_recommendations": [
+        "Emphasize quality and value proposition",
+        "Family-oriented messaging",
+        "Digital-first marketing strategy",
+        "Highlight time-saving convenience"
+      ],
+      "business_implications": {
+        "retail": "Quality family products, premium children's items",
+        "financial": "College savings, retirement planning",
+        "real_estate": "Family homes in good school districts",
+        "automotive": "SUVs, luxury family vehicles"
+      }
+    },
+    "1C": {
+      "code": "1C",
+      "name": "Boomburbs",
+      "lifemode_group": "Affluent Estates",
+      "lifemode_code": "L1",
+      "urbanization": "Suburban Periphery",
+      "overview": "Boomburbs residents live in the fast-growing suburban fringe. Young, affluent families with children who moved to these areas seeking affordable housing and good schools.",
+      "demographics": {
+        "median_age": 36.8,
+        "median_household_income": 125000,
+        "median_net_worth": 380000,
+        "average_household_size": 3.4,
+        "homeownership_rate": 0.82,
+        "education_bachelors_plus": 0.58
+      },
+      "characteristics": [
+        "Young families with children",
+        "New homeowners in master-planned communities",
+        "Commute to work",
+        "Active lifestyle",
+        "Budget-conscious but quality-focused"
+      ],
+      "consumer_preferences": {
+        "shopping": ["Big box stores", "Warehouse clubs", "Online deals"],
+        "media": ["Social media", "Streaming", "Mobile apps"],
+        "dining": ["Fast casual", "Family chains", "Home cooking"],
+        "travel": ["Road trips", "Theme parks", "Budget-friendly destinations"]
+      },
+      "marketing_recommendations": [
+        "Value-oriented messaging",
+        "Family and community focus",
+        "Mobile and social media advertising",
+        "Convenience and time-saving benefits"
+      ],
+      "business_implications": {
+        "retail": "Family essentials, home improvement",
+        "financial": "Mortgages, family insurance",
+        "real_estate": "New construction, family homes",
+        "automotive": "Family SUVs, minivans"
+      }
+    },
+    "1D": {
+      "code": "1D",
+      "name": "Savvy Suburbanites",
+      "lifemode_group": "Affluent Estates",
+      "lifemode_code": "L1",
+      "urbanization": "Suburban Periphery",
+      "overview": "Savvy Suburbanites are well-educated, well-read couples who reside in older suburban neighborhoods. Empty nesters with high discretionary income who value culture and travel.",
+      "demographics": {
+        "median_age": 48.5,
+        "median_household_income": 145000,
+        "median_net_worth": 720000,
+        "average_household_size": 2.4,
+        "homeownership_rate": 0.88,
+        "education_bachelors_plus": 0.65
+      },
+      "characteristics": [
+        "Empty nesters or pre-retirees",
+        "Long-term homeowners",
+        "Culturally active",
+        "Travel enthusiasts",
+        "Financially secure"
+      ],
+      "consumer_preferences": {
+        "shopping": ["Quality brands", "Department stores", "Specialty retailers"],
+        "media": ["Print media", "Public radio/TV", "Cultural programming"],
+        "dining": ["Fine dining", "Wine and culinary experiences", "Local restaurants"],
+        "travel": ["Cultural tourism", "Cruises", "International destinations"]
+      },
+      "marketing_recommendations": [
+        "Sophisticated, intelligent messaging",
+        "Emphasize experience over things",
+        "Multi-channel approach including print",
+        "Cultural and educational appeals"
+      ],
+      "business_implications": {
+        "retail": "Quality home goods, cultural products",
+        "financial": "Retirement planning, wealth preservation",
+        "real_estate": "Downsizing, vacation properties",
+        "automotive": "Luxury sedans, premium brands"
+      }
+    },
+    "2A": {
+      "code": "2A",
+      "name": "Urban Chic",
+      "lifemode_group": "Uptown Individuals",
+      "lifemode_code": "L2",
+      "urbanization": "Principal Urban Centers",
+      "overview": "Urban Chic residents are young, educated professionals living in fashionable urban neighborhoods. Single or couples without children who value urban amenities and walkability.",
+      "demographics": {
+        "median_age": 34.2,
+        "median_household_income": 98000,
+        "median_net_worth": 180000,
+        "average_household_size": 1.8,
+        "homeownership_rate": 0.45,
+        "education_bachelors_plus": 0.72
+      },
+      "characteristics": [
+        "Young urban professionals",
+        "Single or DINK households",
+        "Walkable neighborhood preference",
+        "Environmentally conscious",
+        "Early technology adopters"
+      ],
+      "consumer_preferences": {
+        "shopping": ["Boutiques", "Online shopping", "Sustainable brands"],
+        "media": ["Streaming", "Podcasts", "Social media influencers"],
+        "dining": ["Trendy restaurants", "Food halls", "Delivery services"],
+        "travel": ["Urban destinations", "Airbnb", "Experience-focused"]
+      },
+      "marketing_recommendations": [
+        "Trendy, authentic messaging",
+        "Social media and influencer marketing",
+        "Sustainability messaging",
+        "Experience-driven campaigns"
+      ],
+      "business_implications": {
+        "retail": "Trendy apparel, urban lifestyle products",
+        "financial": "Digital banking, investment apps",
+        "real_estate": "Urban condos, walkable neighborhoods",
+        "automotive": "Car sharing, electric vehicles"
+      }
+    },
+    "2B": {
+      "code": "2B",
+      "name": "Pleasantville",
+      "lifemode_group": "Uptown Individuals",
+      "lifemode_code": "L2",
+      "urbanization": "Metro Cities",
+      "overview": "Pleasantville residents are upper-middle-class families in established suburban neighborhoods. Well-educated with stable careers, they live comfortably in single-family homes.",
+      "demographics": {
+        "median_age": 41.8,
+        "median_household_income": 112000,
+        "median_net_worth": 420000,
+        "average_household_size": 2.7,
+        "homeownership_rate": 0.78,
+        "education_bachelors_plus": 0.55
+      },
+      "characteristics": [
+        "Established suburban families",
+        "Stable, comfortable lifestyle",
+        "Active in children's activities",
+        "Community-oriented",
+        "Moderate technology adoption"
+      ],
+      "consumer_preferences": {
+        "shopping": ["Department stores", "National chains", "Online convenience"],
+        "media": ["Cable TV", "Local news", "Family programming"],
+        "dining": ["Casual dining", "Family restaurants", "Home cooking"],
+        "travel": ["Family vacations", "Domestic destinations", "Beach resorts"]
+      },
+      "marketing_recommendations": [
+        "Family values messaging",
+        "Reliability and trust themes",
+        "Traditional media mix with digital",
+        "Community involvement"
+      ],
+      "business_implications": {
+        "retail": "Family products, home improvement",
+        "financial": "Traditional banking, insurance",
+        "real_estate": "Single-family homes",
+        "automotive": "Family sedans, SUVs"
+      }
+    },
+    "3A": {
+      "code": "3A",
+      "name": "Laptops and Lattes",
+      "lifemode_group": "Metro Renters",
+      "lifemode_code": "L3",
+      "urbanization": "Principal Urban Centers",
+      "overview": "Laptops and Lattes residents are young, well-educated singles and couples in trendy urban neighborhoods. They prioritize experiences, technology, and convenience.",
+      "demographics": {
+        "median_age": 31.5,
+        "median_household_income": 75000,
+        "median_net_worth": 65000,
+        "average_household_size": 1.6,
+        "homeownership_rate": 0.28,
+        "education_bachelors_plus": 0.68
+      },
+      "characteristics": [
+        "Young urban renters",
+        "Tech-savvy professionals",
+        "Experience-seekers",
+        "Health and fitness focused",
+        "Socially and environmentally conscious"
+      ],
+      "consumer_preferences": {
+        "shopping": ["Online-first", "Direct-to-consumer brands", "Subscription services"],
+        "media": ["Streaming only", "Social media", "Podcasts"],
+        "dining": ["Coffee shops", "Fast casual", "Food delivery apps"],
+        "travel": ["Budget airlines", "Hostels/Airbnb", "Adventure travel"]
+      },
+      "marketing_recommendations": [
+        "Digital-native campaigns",
+        "Authentic, relatable content",
+        "Mobile-first approach",
+        "Social proof and reviews"
+      ],
+      "business_implications": {
+        "retail": "Tech products, fitness gear, experiences",
+        "financial": "Mobile banking, micro-investing",
+        "real_estate": "Urban apartments, co-living",
+        "automotive": "Ride-sharing, scooters"
+      }
+    },
+    "4A": {
+      "code": "4A",
+      "name": "Soccer Moms",
+      "lifemode_group": "Family Landscapes",
+      "lifemode_code": "L4",
+      "urbanization": "Suburban Periphery",
+      "overview": "Soccer Moms are affluent, family-focused households in newer suburban developments. Busy parents juggling careers and children's activities in child-centric communities.",
+      "demographics": {
+        "median_age": 38.5,
+        "median_household_income": 105000,
+        "median_net_worth": 320000,
+        "average_household_size": 3.3,
+        "homeownership_rate": 0.85,
+        "education_bachelors_plus": 0.52
+      },
+      "characteristics": [
+        "Family-centric lifestyle",
+        "Children in multiple activities",
+        "Dual-income households",
+        "Community and school involvement",
+        "Minivans and SUVs"
+      ],
+      "consumer_preferences": {
+        "shopping": ["Convenience-focused", "Bulk buying", "Online ordering"],
+        "media": ["Family streaming", "Parenting apps", "Social media"],
+        "dining": ["Quick-service", "Family restaurants", "Meal kits"],
+        "travel": ["Theme parks", "Family resorts", "Road trips"]
+      },
+      "marketing_recommendations": [
+        "Family and convenience messaging",
+        "Time-saving solutions",
+        "Digital with strong mobile presence",
+        "Parent testimonials and reviews"
+      ],
+      "business_implications": {
+        "retail": "Children's products, family supplies",
+        "financial": "529 plans, family insurance",
+        "real_estate": "Family homes near good schools",
+        "automotive": "SUVs, minivans"
+      }
+    },
+    "5A": {
+      "code": "5A",
+      "name": "Comfortable Empty Nesters",
+      "lifemode_group": "GenXurban",
+      "lifemode_code": "L5",
+      "urbanization": "Suburban Periphery",
+      "overview": "Comfortable Empty Nesters are older married couples in established suburban homes. Children have moved out, leaving them with financial security and time for leisure.",
+      "demographics": {
+        "median_age": 52.5,
+        "median_household_income": 88000,
+        "median_net_worth": 480000,
+        "average_household_size": 2.2,
+        "homeownership_rate": 0.86,
+        "education_bachelors_plus": 0.42
+      },
+      "characteristics": [
+        "Empty nest households",
+        "Long-term homeowners",
+        "Established in community",
+        "More leisure time",
+        "Financially comfortable"
+      ],
+      "consumer_preferences": {
+        "shopping": ["Traditional retail", "Quality over trends", "Loyalty programs"],
+        "media": ["Cable TV", "Print newspapers", "Radio"],
+        "dining": ["Casual dining", "Local favorites", "Home cooking"],
+        "travel": ["Cruises", "Group tours", "RV travel"]
+      },
+      "marketing_recommendations": [
+        "Quality and reliability messaging",
+        "Traditional media still effective",
+        "Loyalty programs",
+        "Health and wellness themes"
+      ],
+      "business_implications": {
+        "retail": "Home goods, healthcare products",
+        "financial": "Retirement planning, Medicare",
+        "real_estate": "Downsizing, retirement communities",
+        "automotive": "Comfortable sedans, crossovers"
+      }
+    },
+    "6A": {
+      "code": "6A",
+      "name": "Green Acres",
+      "lifemode_group": "Cozy Country Living",
+      "lifemode_code": "L6",
+      "urbanization": "Rural",
+      "overview": "Green Acres residents are upper-middle-class households in rural areas and small towns. They enjoy country living while maintaining professional careers.",
+      "demographics": {
+        "median_age": 46.2,
+        "median_household_income": 82000,
+        "median_net_worth": 350000,
+        "average_household_size": 2.6,
+        "homeownership_rate": 0.88,
+        "education_bachelors_plus": 0.35
+      },
+      "characteristics": [
+        "Rural/small town lifestyle",
+        "Land owners with acreage",
+        "Self-sufficient attitude",
+        "Outdoor recreation",
+        "Traditional values"
+      ],
+      "consumer_preferences": {
+        "shopping": ["Local stores", "Online for variety", "Practical purchases"],
+        "media": ["Country radio", "Outdoor magazines", "Local TV"],
+        "dining": ["Home cooking", "Local diners", "Grilling/BBQ"],
+        "travel": ["Camping", "Hunting/fishing trips", "National parks"]
+      },
+      "marketing_recommendations": [
+        "Authenticity and practicality",
+        "Local and community focus",
+        "Outdoor and rural themes",
+        "Value and durability messaging"
+      ],
+      "business_implications": {
+        "retail": "Outdoor equipment, home/garden supplies",
+        "financial": "Agricultural loans, local banking",
+        "real_estate": "Rural properties, land",
+        "automotive": "Trucks, utility vehicles"
+      }
+    },
+    "7A": {
+      "code": "7A",
+      "name": "Up and Coming Families",
+      "lifemode_group": "Ethnic Enclaves",
+      "lifemode_code": "L7",
+      "urbanization": "Metro Cities",
+      "overview": "Up and Coming Families are young, diverse families in urban neighborhoods. First or second-generation Americans working hard to achieve the American Dream.",
+      "demographics": {
+        "median_age": 32.5,
+        "median_household_income": 62000,
+        "median_net_worth": 85000,
+        "average_household_size": 3.8,
+        "homeownership_rate": 0.55,
+        "education_bachelors_plus": 0.28
+      },
+      "characteristics": [
+        "Young, diverse families",
+        "Multi-generational households",
+        "First-time homebuyers",
+        "Strong family ties",
+        "Upwardly mobile"
+      ],
+      "consumer_preferences": {
+        "shopping": ["Value retailers", "Ethnic markets", "Family-size products"],
+        "media": ["Spanish-language media", "Social media", "Streaming"],
+        "dining": ["Home cooking", "Ethnic restaurants", "Fast food"],
+        "travel": ["Visiting family", "Domestic destinations", "Budget-conscious"]
+      },
+      "marketing_recommendations": [
+        "Family and aspiration messaging",
+        "Bilingual/multicultural approach",
+        "Value-focused promotions",
+        "Community trust-building"
+      ],
+      "business_implications": {
+        "retail": "Family essentials, value pricing",
+        "financial": "First-time mortgages, remittances",
+        "real_estate": "Starter homes, urban areas",
+        "automotive": "Reliable, affordable vehicles"
+      }
+    },
+    "8A": {
+      "code": "8A",
+      "name": "City Lights",
+      "lifemode_group": "Middle Ground",
+      "lifemode_code": "L8",
+      "urbanization": "Principal Urban Centers",
+      "overview": "City Lights residents are diverse, middle-income households in older urban neighborhoods. Mix of families and singles in apartments and row houses.",
+      "demographics": {
+        "median_age": 36.8,
+        "median_household_income": 52000,
+        "median_net_worth": 45000,
+        "average_household_size": 2.4,
+        "homeownership_rate": 0.38,
+        "education_bachelors_plus": 0.32
+      },
+      "characteristics": [
+        "Urban, diverse households",
+        "Mix of renters and owners",
+        "Use public transportation",
+        "Price-conscious consumers",
+        "Neighborhood-focused"
+      ],
+      "consumer_preferences": {
+        "shopping": ["Discount stores", "Neighborhood shops", "Convenience stores"],
+        "media": ["Local TV", "Social media", "Mobile apps"],
+        "dining": ["Fast food", "Local eateries", "Home cooking"],
+        "travel": ["Bus/train travel", "Visiting family", "Day trips"]
+      },
+      "marketing_recommendations": [
+        "Value and convenience messaging",
+        "Local and neighborhood focus",
+        "Mobile advertising",
+        "Promotions and deals"
+      ],
+      "business_implications": {
+        "retail": "Everyday essentials, value brands",
+        "financial": "Basic banking, prepaid cards",
+        "real_estate": "Affordable urban housing",
+        "automotive": "Used vehicles, public transit"
+      }
+    },
+    "9A": {
+      "code": "9A",
+      "name": "Senior Styles",
+      "lifemode_group": "Senior Styles",
+      "lifemode_code": "L9",
+      "urbanization": "Suburban Periphery",
+      "overview": "Senior Styles residents are retired seniors living independently in suburban homes. Fixed incomes but often own homes outright with equity.",
+      "demographics": {
+        "median_age": 72.5,
+        "median_household_income": 42000,
+        "median_net_worth": 280000,
+        "average_household_size": 1.6,
+        "homeownership_rate": 0.78,
+        "education_bachelors_plus": 0.22
+      },
+      "characteristics": [
+        "Retired seniors",
+        "Living independently",
+        "Fixed income households",
+        "Long-term residents",
+        "Health-conscious"
+      ],
+      "consumer_preferences": {
+        "shopping": ["Familiar stores", "Senior discounts", "Pharmacy visits"],
+        "media": ["Network TV", "Print newspapers", "Radio"],
+        "dining": ["Early bird specials", "Familiar restaurants", "Home cooking"],
+        "travel": ["Group tours", "Cruises", "Visiting grandchildren"]
+      },
+      "marketing_recommendations": [
+        "Trust and familiarity",
+        "Health and wellness focus",
+        "Traditional media effective",
+        "Clear, simple messaging"
+      ],
+      "business_implications": {
+        "retail": "Healthcare products, comfort items",
+        "financial": "Medicare, estate planning",
+        "real_estate": "Aging in place, senior communities",
+        "automotive": "Reliable, easy-to-drive vehicles"
+      }
+    },
+    "10A": {
+      "code": "10A",
+      "name": "Rustbelt Traditions",
+      "lifemode_group": "Rustic Outposts",
+      "lifemode_code": "L10",
+      "urbanization": "Rural",
+      "overview": "Rustbelt Traditions residents are working-class families in older industrial towns. Stable, traditional communities with strong work ethics and family values.",
+      "demographics": {
+        "median_age": 44.5,
+        "median_household_income": 48000,
+        "median_net_worth": 120000,
+        "average_household_size": 2.4,
+        "homeownership_rate": 0.72,
+        "education_bachelors_plus": 0.18
+      },
+      "characteristics": [
+        "Working-class households",
+        "Industrial/manufacturing background",
+        "Strong community ties",
+        "Traditional values",
+        "Cost-conscious"
+      ],
+      "consumer_preferences": {
+        "shopping": ["Walmart", "Dollar stores", "Local shops"],
+        "media": ["Network TV", "Country radio", "Local news"],
+        "dining": ["Fast food", "Diners", "Home cooking"],
+        "travel": ["Camping", "Visiting family", "Day trips"]
+      },
+      "marketing_recommendations": [
+        "Value and practicality",
+        "Traditional American themes",
+        "Local community focus",
+        "Trust-based messaging"
+      ],
+      "business_implications": {
+        "retail": "Value products, basic necessities",
+        "financial": "Local banks, basic accounts",
+        "real_estate": "Affordable housing, mobile homes",
+        "automotive": "Used vehicles, trucks"
+      }
+    },
+    "11A": {
+      "code": "11A",
+      "name": "Midtown Singles",
+      "lifemode_group": "Midtown Singles",
+      "lifemode_code": "L11",
+      "urbanization": "Metro Cities",
+      "overview": "Midtown Singles are young, diverse singles in mid-sized metro areas. Starting careers and living in apartments, they balance work and social life.",
+      "demographics": {
+        "median_age": 28.5,
+        "median_household_income": 38000,
+        "median_net_worth": 18000,
+        "average_household_size": 1.8,
+        "homeownership_rate": 0.22,
+        "education_bachelors_plus": 0.35
+      },
+      "characteristics": [
+        "Young singles",
+        "Apartment dwellers",
+        "Career-focused",
+        "Social and active",
+        "Budget-conscious"
+      ],
+      "consumer_preferences": {
+        "shopping": ["Fast fashion", "Online deals", "Thrift stores"],
+        "media": ["Social media", "Streaming", "YouTube"],
+        "dining": ["Fast casual", "Delivery apps", "Bars/nightlife"],
+        "travel": ["Budget travel", "Road trips", "Music festivals"]
+      },
+      "marketing_recommendations": [
+        "Youth-oriented messaging",
+        "Social media advertising",
+        "Value and deals",
+        "Experience-focused"
+      ],
+      "business_implications": {
+        "retail": "Affordable fashion, electronics",
+        "financial": "Basic banking, student loans",
+        "real_estate": "Affordable apartments",
+        "automotive": "Used cars, car sharing"
+      }
+    },
+    "12A": {
+      "code": "12A",
+      "name": "Hometown Heritage",
+      "lifemode_group": "Hometown",
+      "lifemode_code": "L12",
+      "urbanization": "Small Towns",
+      "overview": "Hometown Heritage residents are settled families in small towns across America. Multi-generational connections to their communities with traditional lifestyles.",
+      "demographics": {
+        "median_age": 42.8,
+        "median_household_income": 55000,
+        "median_net_worth": 165000,
+        "average_household_size": 2.5,
+        "homeownership_rate": 0.75,
+        "education_bachelors_plus": 0.24
+      },
+      "characteristics": [
+        "Small town residents",
+        "Multi-generational ties",
+        "Community-involved",
+        "Traditional lifestyle",
+        "Local business supporters"
+      ],
+      "consumer_preferences": {
+        "shopping": ["Local stores", "Walmart", "Practical purchases"],
+        "media": ["Local TV/radio", "Community papers", "Facebook"],
+        "dining": ["Local restaurants", "Home cooking", "Church events"],
+        "travel": ["Regional trips", "Visiting family", "State parks"]
+      },
+      "marketing_recommendations": [
+        "Local and community focus",
+        "Traditional values messaging",
+        "Local media effective",
+        "Trust and relationships"
+      ],
+      "business_implications": {
+        "retail": "Everyday essentials, local support",
+        "financial": "Community banks, local credit unions",
+        "real_estate": "Family homes, affordable housing",
+        "automotive": "Trucks, American-made vehicles"
+      }
+    },
+    "I3": {
+      "code": "I3",
+      "name": "Heartland Communities",
+      "lifemode_group": "Midlife Constants",
+      "lifemode_code": "L9",
+      "urbanization": "Rural",
+      "overview": "Rural Midwestern areas with industrial roots and older housing. Married couples, singles living alone, single family homes. Traditional, hardworking communities.",
+      "demographics": {
+        "median_age": 48.2,
+        "median_household_income": 45000,
+        "median_net_worth": 125000,
+        "average_household_size": 2.2,
+        "homeownership_rate": 0.74,
+        "education_bachelors_plus": 0.16
+      },
+      "characteristics": [
+        "Often bank locally and pay in cash",
+        "Spend money on pets",
+        "Tend not to own new technology",
+        "Tend to travel domestically",
+        "Rural Midwestern lifestyle",
+        "Industrial heritage communities"
+      ],
+      "consumer_preferences": {
+        "shopping": ["Local stores", "Cash payments", "Practical purchases"],
+        "media": ["Local TV", "Radio", "Print newspapers"],
+        "dining": ["Home cooking", "Local diners", "Traditional meals"],
+        "travel": ["Domestic travel", "Road trips", "Visiting family"]
+      },
+      "marketing_recommendations": [
+        "Traditional, straightforward messaging",
+        "Local community focus",
+        "Cash and local banking friendly",
+        "Pet-related products/services opportunity"
+      ],
+      "business_implications": {
+        "retail": "Pet supplies, practical goods, local services",
+        "financial": "Local banks, traditional banking",
+        "real_estate": "Affordable rural homes",
+        "automotive": "Used vehicles, trucks"
+      }
+    }
+  },
+  "lifemode_groups_reference": {
+    "L1": {
+      "code": "L1",
+      "name": "Affluent Estates",
+      "description": "Established wealth and high incomes characterize these neighborhoods. Residents are well educated and employed in professional occupations.",
+      "segments": ["1A", "1B", "1C", "1D"]
+    },
+    "L2": {
+      "code": "L2",
+      "name": "Uptown Individuals",
+      "description": "Young, educated, and employed singles living in urban neighborhoods. Prefer walkable, amenity-rich locations.",
+      "segments": ["2A", "2B"]
+    },
+    "L3": {
+      "code": "L3",
+      "name": "Metro Renters",
+      "description": "Young, mobile urbanites living in metro areas. High percentage of renters focused on lifestyle over home ownership.",
+      "segments": ["3A"]
+    },
+    "L4": {
+      "code": "L4",
+      "name": "Family Landscapes",
+      "description": "Successful younger families in suburban settings. Dual incomes support child-centered lifestyles.",
+      "segments": ["4A"]
+    },
+    "L5": {
+      "code": "L5",
+      "name": "GenXurban",
+      "description": "Established Gen X families and empty nesters in suburban homes. Stable, comfortable lifestyles.",
+      "segments": ["5A"]
+    },
+    "L6": {
+      "code": "L6",
+      "name": "Cozy Country Living",
+      "description": "Country lifestyle in rural areas and small towns. Self-sufficient attitude and outdoor orientation.",
+      "segments": ["6A"]
+    },
+    "L7": {
+      "code": "L7",
+      "name": "Ethnic Enclaves",
+      "description": "Diverse, multi-cultural neighborhoods. First and second-generation Americans building communities.",
+      "segments": ["7A"]
+    },
+    "L8": {
+      "code": "L8",
+      "name": "Middle Ground",
+      "description": "Middle-income, middle-aged households in urban areas. Stable, diverse neighborhoods.",
+      "segments": ["8A"]
+    },
+    "L9": {
+      "code": "L9",
+      "name": "Senior Styles",
+      "description": "Senior households, many retired and living on fixed incomes. Stable, established communities.",
+      "segments": ["9A", "I3"]
+    },
+    "L10": {
+      "code": "L10",
+      "name": "Rustic Outposts",
+      "description": "Rural, working-class households. Strong connections to land and traditional industries.",
+      "segments": ["10A"]
+    },
+    "L11": {
+      "code": "L11",
+      "name": "Midtown Singles",
+      "description": "Young singles and couples in urban apartments. Starting careers and building lives.",
+      "segments": ["11A"]
+    },
+    "L12": {
+      "code": "L12",
+      "name": "Hometown",
+      "description": "Small town America with multi-generational ties. Traditional values and local focus.",
+      "segments": ["12A"]
+    }
+  },
+  "notes": {
+    "source": "Based on Esri Tapestry Segmentation 2025 documentation",
+    "coverage": "This is a representative subset. Full dataset has 61 segments.",
+    "update_frequency": "Esri updates Tapestry data annually",
+    "usage": "Use for RAG queries about segment characteristics and business insights"
+  }
+}
