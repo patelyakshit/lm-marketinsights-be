@@ -3,8 +3,14 @@ GCP Credentials Management Utility
 
 Automatically checks for and downloads GCP service account credentials
 from Azure Blob Storage if not present locally.
+
+Supports multiple credential sources:
+1. GOOGLE_APPLICATION_CREDENTIALS_JSON env var (for Railway/Heroku - JSON as string)
+2. GOOGLE_APPLICATION_CREDENTIALS file path (for local/Docker)
+3. Azure Blob Storage download (fallback)
 """
 
+import json
 import logging
 import os
 from pathlib import Path
@@ -15,16 +21,54 @@ from decouple import config
 logger = logging.getLogger(__name__)
 
 # Credentials directory and file path
-# Check if GOOGLE_APPLICATION_CREDENTIALS is set, use that path if it exists
-# Otherwise default to /tmp/credentials.json
+# Using /tmp for container environments (Docker/K8s/Railway)
+CREDENTIALS_DIR = Path("/tmp")
+CREDENTIALS_FILE = CREDENTIALS_DIR / "gcp_credentials.json"
+
+
+def create_credentials_from_env() -> bool:
+    """
+    Create credentials file from GOOGLE_APPLICATION_CREDENTIALS_JSON env var.
+    This is used for Railway/Heroku where you can't mount files.
+
+    Returns:
+        bool: True if credentials were created from env var, False otherwise
+    """
+    json_creds = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS_JSON")
+    if not json_creds:
+        return False
+
+    try:
+        # Validate it's valid JSON
+        creds_dict = json.loads(json_creds)
+
+        # Ensure directory exists
+        CREDENTIALS_DIR.mkdir(parents=True, exist_ok=True)
+
+        # Write to file
+        CREDENTIALS_FILE.write_text(json.dumps(creds_dict, indent=2))
+        CREDENTIALS_FILE.chmod(0o600)
+
+        # Set the env var to point to this file
+        os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = str(CREDENTIALS_FILE)
+
+        logger.info(f"✓ Created GCP credentials from GOOGLE_APPLICATION_CREDENTIALS_JSON env var")
+        logger.info(f"  File: {CREDENTIALS_FILE}")
+        return True
+
+    except json.JSONDecodeError as e:
+        logger.error(f"✗ Invalid JSON in GOOGLE_APPLICATION_CREDENTIALS_JSON: {e}")
+        return False
+    except Exception as e:
+        logger.error(f"✗ Error creating credentials from env var: {e}")
+        return False
+
+
+# Check for existing GOOGLE_APPLICATION_CREDENTIALS path
 env_creds_path = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS")
-if env_creds_path:
+if env_creds_path and Path(env_creds_path).exists():
     CREDENTIALS_FILE = Path(env_creds_path)
     CREDENTIALS_DIR = CREDENTIALS_FILE.parent
-else:
-    # Using /tmp for container environments (Docker/K8s)
-    CREDENTIALS_DIR = Path("/tmp")
-    CREDENTIALS_FILE = CREDENTIALS_DIR / "credentials.json"
 
 # Azure Blob Storage URL for GCP credentials
 AZURE_BLOB_URL = config(
@@ -35,15 +79,25 @@ AZURE_BLOB_URL = config(
 
 async def check_or_download_credentials_file() -> bool:
     """
-    Check if credentials.json exists, download from Azure if missing.
+    Check if credentials.json exists, create from env var, or download from Azure.
 
-    The GCP credentials are required for Google ADK and other Google Cloud services.
-    If the file doesn't exist, it's automatically downloaded from Azure Blob Storage.
+    Priority order:
+    1. GOOGLE_APPLICATION_CREDENTIALS_JSON env var (Railway/Heroku)
+    2. Existing file at GOOGLE_APPLICATION_CREDENTIALS path
+    3. Download from Azure Blob Storage
 
     Returns:
-        bool: True if file exists or download succeeded, False otherwise
+        bool: True if file exists or was created/downloaded, False otherwise
     """
+    global CREDENTIALS_FILE, CREDENTIALS_DIR
+
     try:
+        # First, try to create from env var (Railway/Heroku deployment)
+        if create_credentials_from_env():
+            CREDENTIALS_FILE = Path(os.environ["GOOGLE_APPLICATION_CREDENTIALS"])
+            CREDENTIALS_DIR = CREDENTIALS_FILE.parent
+            return True
+
         # Ensure credentials directory exists and is writable
         if not CREDENTIALS_DIR.exists():
             logger.info(f"Creating credentials directory: {CREDENTIALS_DIR}")
