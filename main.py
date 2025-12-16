@@ -179,10 +179,19 @@ async def startup_event():
             "✓ Singleton agents created with shared client: TEXT_ROOT_AGENT, AUDIO_ROOT_AGENT"
         )
 
-        # Step 5: Initialize RabbitMQ queue manager
+        # Step 5: Initialize RabbitMQ queue manager (optional - skip if not configured)
         logger.info("Step 6/7: Initializing message queue manager...")
-        init_queue_manager()
-        logger.info("Message queue manager initialized")
+        try:
+            from config.config import RABBITMQ_HOST
+            # Only attempt to connect if RabbitMQ is explicitly configured (not localhost default)
+            if RABBITMQ_HOST and RABBITMQ_HOST != "localhost":
+                init_queue_manager()
+                logger.info("✓ Message queue manager initialized")
+            else:
+                logger.info("⊘ RabbitMQ not configured (RABBITMQ_HOST not set) - skipping queue manager")
+        except Exception as e:
+            logger.warning(f"⚠ RabbitMQ initialization failed (non-fatal): {e}")
+            logger.warning("  App will continue without message queue functionality")
 
         # Step 6: Initialize singleton Runners (ADK best practice - reuse across requests)
         logger.info("Step 7/7: Initializing singleton Runners...")
