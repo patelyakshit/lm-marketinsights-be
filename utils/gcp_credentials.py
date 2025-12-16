@@ -42,6 +42,14 @@ def create_credentials_from_env() -> bool:
         # Validate it's valid JSON
         creds_dict = json.loads(json_creds)
 
+        # Fix private_key: Railway/env vars may have literal \n instead of actual newlines
+        if "private_key" in creds_dict:
+            private_key = creds_dict["private_key"]
+            # Replace literal \n with actual newlines if needed
+            if "\\n" in private_key:
+                creds_dict["private_key"] = private_key.replace("\\n", "\n")
+                logger.info("  Fixed escaped newlines in private_key")
+
         # Ensure directory exists
         CREDENTIALS_DIR.mkdir(parents=True, exist_ok=True)
 
