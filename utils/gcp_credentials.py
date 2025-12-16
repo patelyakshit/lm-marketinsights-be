@@ -5,11 +5,13 @@ Automatically checks for and downloads GCP service account credentials
 from Azure Blob Storage if not present locally.
 
 Supports multiple credential sources:
-1. GOOGLE_APPLICATION_CREDENTIALS_JSON env var (for Railway/Heroku - JSON as string)
-2. GOOGLE_APPLICATION_CREDENTIALS file path (for local/Docker)
-3. Azure Blob Storage download (fallback)
+1. GOOGLE_APPLICATION_CREDENTIALS_BASE64 env var (for Railway - base64 encoded JSON)
+2. GOOGLE_APPLICATION_CREDENTIALS_JSON env var (for Railway/Heroku - JSON as string)
+3. GOOGLE_APPLICATION_CREDENTIALS file path (for local/Docker)
+4. Azure Blob Storage download (fallback)
 """
 
+import base64
 import json
 import logging
 import os
@@ -79,10 +81,75 @@ def fix_private_key_newlines(private_key: str) -> str:
     return private_key
 
 
+def create_credentials_from_base64() -> bool:
+    """
+    Create credentials file from GOOGLE_APPLICATION_CREDENTIALS_BASE64 env var.
+    This is the preferred method for Railway as it avoids character escaping issues.
+
+    Returns:
+        bool: True if credentials were created from base64, False otherwise
+    """
+    base64_creds = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS_BASE64")
+    if not base64_creds:
+        return False
+
+    logger.info("Attempting to decode credentials from GOOGLE_APPLICATION_CREDENTIALS_BASE64...")
+    logger.info(f"  Base64 string length: {len(base64_creds)} chars")
+
+    try:
+        # Decode base64 to JSON string
+        json_bytes = base64.b64decode(base64_creds)
+        json_creds = json_bytes.decode("utf-8")
+        logger.info(f"  Decoded JSON length: {len(json_creds)} chars")
+
+        # Parse and validate JSON
+        creds_dict = json.loads(json_creds)
+        logger.info(f"  Parsed JSON keys: {list(creds_dict.keys())}")
+
+        # Validate private_key exists and has proper length
+        if "private_key" not in creds_dict:
+            logger.error("  No 'private_key' found in credentials!")
+            return False
+
+        private_key = creds_dict["private_key"]
+        logger.info(f"  Private key length: {len(private_key)} chars")
+        logger.info(f"  Private key newlines: {private_key.count(chr(10))}")
+
+        # Ensure directory exists
+        CREDENTIALS_DIR.mkdir(parents=True, exist_ok=True)
+
+        # Write to file
+        CREDENTIALS_FILE.write_text(json.dumps(creds_dict, indent=2))
+        CREDENTIALS_FILE.chmod(0o600)
+
+        # Set the env var to point to this file
+        os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = str(CREDENTIALS_FILE)
+
+        logger.info(f"✓ Created GCP credentials from GOOGLE_APPLICATION_CREDENTIALS_BASE64")
+        logger.info(f"  File: {CREDENTIALS_FILE}")
+        logger.info(f"  File size: {CREDENTIALS_FILE.stat().st_size} bytes")
+        return True
+
+    except base64.binascii.Error as e:
+        logger.error(f"✗ Invalid base64 in GOOGLE_APPLICATION_CREDENTIALS_BASE64: {e}")
+        return False
+    except json.JSONDecodeError as e:
+        logger.error(f"✗ Invalid JSON after base64 decode: {e}")
+        return False
+    except Exception as e:
+        logger.error(f"✗ Error creating credentials from base64: {e}")
+        import traceback
+        logger.error(traceback.format_exc())
+        return False
+
+
 def create_credentials_from_env() -> bool:
     """
     Create credentials file from GOOGLE_APPLICATION_CREDENTIALS_JSON env var.
     This is used for Railway/Heroku where you can't mount files.
+
+    NOTE: Prefer GOOGLE_APPLICATION_CREDENTIALS_BASE64 for Railway to avoid
+    character escaping and truncation issues.
 
     Returns:
         bool: True if credentials were created from env var, False otherwise
@@ -93,6 +160,11 @@ def create_credentials_from_env() -> bool:
 
     # Log raw input info for debugging
     logger.info(f"  Raw env var length: {len(json_creds)} chars")
+
+    # Warn if the JSON looks truncated
+    if len(json_creds) < 2000:
+        logger.warning(f"  ⚠️ JSON appears truncated! Expected ~2300+ chars, got {len(json_creds)}")
+        logger.warning("  Consider using GOOGLE_APPLICATION_CREDENTIALS_BASE64 instead")
 
     try:
         # Validate it's valid JSON
@@ -188,7 +260,13 @@ async def check_or_download_credentials_file() -> bool:
     global CREDENTIALS_FILE, CREDENTIALS_DIR
 
     try:
-        # First, try to create from env var (Railway/Heroku deployment)
+        # First, try base64 encoded credentials (preferred for Railway)
+        if create_credentials_from_base64():
+            CREDENTIALS_FILE = Path(os.environ["GOOGLE_APPLICATION_CREDENTIALS"])
+            CREDENTIALS_DIR = CREDENTIALS_FILE.parent
+            return True
+
+        # Second, try JSON string (fallback, may have truncation issues)
         if create_credentials_from_env():
             CREDENTIALS_FILE = Path(os.environ["GOOGLE_APPLICATION_CREDENTIALS"])
             CREDENTIALS_DIR = CREDENTIALS_FILE.parent
