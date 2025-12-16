@@ -110,9 +110,34 @@ def create_credentials_from_env() -> bool:
         # Ensure directory exists
         CREDENTIALS_DIR.mkdir(parents=True, exist_ok=True)
 
+        # Log what we're about to write
+        private_key = creds_dict.get("private_key", "")
+        logger.info(f"  Private key length: {len(private_key)} chars")
+        logger.info(f"  Total fields in creds: {len(creds_dict)}")
+
         # Write to file
-        CREDENTIALS_FILE.write_text(json.dumps(creds_dict, indent=2))
+        json_content = json.dumps(creds_dict, indent=2)
+        logger.info(f"  JSON content length: {len(json_content)} chars")
+        CREDENTIALS_FILE.write_text(json_content)
         CREDENTIALS_FILE.chmod(0o600)
+
+        # Verify written file
+        written_size = CREDENTIALS_FILE.stat().st_size
+        logger.info(f"  Written file size: {written_size} bytes")
+
+        # Read back and verify private_key
+        with open(CREDENTIALS_FILE, "r") as f:
+            verified_creds = json.load(f)
+            verified_pk = verified_creds.get("private_key", "")
+            verified_newlines = verified_pk.count("\n")
+            logger.info(f"  Verified private_key length: {len(verified_pk)} chars")
+            logger.info(f"  Verified private_key newlines: {verified_newlines}")
+            # Check PEM structure
+            if "-----BEGIN PRIVATE KEY-----" in verified_pk and "-----END PRIVATE KEY-----" in verified_pk:
+                logger.info("  ✓ PEM structure verified")
+            else:
+                logger.error("  ✗ PEM structure MISSING!")
+                logger.error(f"    Key starts with: {repr(verified_pk[:80])}")
 
         # Set the env var to point to this file
         os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = str(CREDENTIALS_FILE)
