@@ -1,25 +1,20 @@
 """
-Image Generation and Upload Utility for PlaceStory
+Image Generation and Upload Utility
 
-Handles AI image generation via Gemini and uploads to Azure Blob Storage via the Manager.
-Recursively processes placestory JSON to replace image_prompt fields with URLs.
+Handles AI image generation via Gemini and uploads to Azure Blob Storage.
 """
 
 import hashlib
-import asyncio
 import logging
 import os
 from io import BytesIO
-from typing import Dict, Any, List, Optional
-from google.adk.tools import ToolContext
+from typing import Optional
 from decouple import config
 from PIL import Image
 from google import genai
 from google.genai import types as genai_types
 
-from utils.genai_client_manager import get_genai_client
 from utils.azure_storage import AzureBlobStorageManager
-from tools.placestory_tools import _send_placestory_status
 
 logger = logging.getLogger(__name__)
 
@@ -47,45 +42,17 @@ def get_image_gen_client() -> genai.Client:
     return _image_gen_client
 
 
-PLACESTORY_AZURE_ACCOUNT_KEY = config(
+# Azure Storage Configuration for marketing images
+AZURE_ACCOUNT_KEY = config(
     "PLACESTORY_AZURE_STORAGE_ACCOUNT_KEY", default=""
 )
-PLACESTORY_AZURE_CONTAINER_NAME = config(
+AZURE_CONTAINER_NAME = config(
     "PLACESTORY_AZURE_CONTAINER_NAME", default="placestory-images"
 )
-PLACESTORY_AZURE_STORAGE_URL = config("PLACESTORY_AZURE_STORAGE_URL", default="")
-PLACESTORY_AZURE_STORAGE_ACCOUNT_NAME = config(
+AZURE_STORAGE_URL = config("PLACESTORY_AZURE_STORAGE_URL", default="")
+AZURE_STORAGE_ACCOUNT_NAME = config(
     "PLACESTORY_AZURE_STORAGE_ACCOUNT_NAME", default=""
 )
-
-_placestory_storage_manager = AzureBlobStorageManager(
-    account_url=PLACESTORY_AZURE_STORAGE_URL,
-    account_key=PLACESTORY_AZURE_ACCOUNT_KEY,
-    container_name=PLACESTORY_AZURE_CONTAINER_NAME,
-)
-
-
-async def upload_image_via_manager(
-    image_bytes: bytes, filename: str, content_type: str = "image/png"
-) -> str:
-    """
-    Uploads using the configured AzureBlobStorageManager.
-    """
-    try:
-        result = await _placestory_storage_manager.upload_file(
-            file_content=image_bytes, filename=filename, content_type=content_type
-        )
-
-        if result.get("success"):
-            # Prefer SAS URL for secure access, fallback to blob_url
-            return result.get("sas_url") or result.get("blob_url")
-        else:
-            logger.error(f"Manager upload failed: {result.get('error')}")
-            return await upload_to_local_fallback(image_bytes, filename)
-
-    except Exception as e:
-        logger.error(f"❌ Error using Azure Manager: {e}")
-        return await upload_to_local_fallback(image_bytes, filename)
 
 
 async def upload_to_local_fallback(image_bytes: bytes, filename: str) -> str:
@@ -100,7 +67,7 @@ async def upload_to_local_fallback(image_bytes: bytes, filename: str) -> str:
 
         return f"/static/{filename}"
     except Exception as e:
-        logger.error(f"❌ Error with local fallback: {e}")
+        logger.error(f"Error with local fallback: {e}")
         return "https://via.placeholder.com/800x600?text=Generation+Failed"
 
 
@@ -121,7 +88,7 @@ async def generate_and_save_image_async(
     Returns:
         URL of the generated and uploaded image
     """
-    logger.info(f"🎨 Generating image {prompt_index + 1}: '{prompt[:60]}...'")
+    logger.info(f"Generating image {prompt_index + 1}: '{prompt[:60]}...'")
 
     try:
         # Use dedicated image generation client with API key for Gemini 3
@@ -163,7 +130,7 @@ async def generate_and_save_image_async(
         ]
 
         # Configure for image output
-        config = genai_types.GenerateContentConfig(
+        gen_config = genai_types.GenerateContentConfig(
             response_modalities=["IMAGE"],
         )
 
@@ -172,7 +139,7 @@ async def generate_and_save_image_async(
         response = client.models.generate_content(
             model="gemini-3-pro-image-preview",
             contents=contents,
-            config=config,
+            config=gen_config,
         )
 
         # Extract image bytes from Gemini response
@@ -198,12 +165,12 @@ async def generate_and_save_image_async(
         # Upload to Azure Blob Storage
         try:
             azure_blob_storage_manager = AzureBlobStorageManager(
-                account_name=PLACESTORY_AZURE_STORAGE_ACCOUNT_NAME,
-                account_key=PLACESTORY_AZURE_ACCOUNT_KEY,
-                container_name=PLACESTORY_AZURE_CONTAINER_NAME,
+                account_name=AZURE_STORAGE_ACCOUNT_NAME,
+                account_key=AZURE_ACCOUNT_KEY,
+                container_name=AZURE_CONTAINER_NAME,
             )
             logger.debug(
-                f"Uploading image to Azure: container={PLACESTORY_AZURE_CONTAINER_NAME}, filename={filename}, size={len(image_bytes)} bytes"
+                f"Uploading image to Azure: container={AZURE_CONTAINER_NAME}, filename={filename}, size={len(image_bytes)} bytes"
             )
             result = await azure_blob_storage_manager.upload_file(
                 image_bytes, filename, content_type="image/png"
@@ -213,19 +180,13 @@ async def generate_and_save_image_async(
                 # Prefer SAS URL for secure access, fallback to blob_url
                 image_url = result.get("sas_url") or result.get("blob_url")
                 if image_url:
-                    # Verify the URL contains the filename
-                    if filename not in image_url:
-                        logger.warning(
-                            f"Generated URL does not contain filename '{filename}': {image_url[:100]}"
-                        )
                     # Verify URL has proper format
                     if not image_url.startswith("http"):
                         logger.error(f"Invalid URL format returned: {image_url}")
                         return await upload_to_local_fallback(image_bytes, filename)
 
                     logger.info(
-                        f"✅ Successfully uploaded image to Azure: {filename} "
-                        f"(URL: {image_url[:80]}..., filename in URL: {filename in image_url})"
+                        f"Successfully uploaded image to Azure: {filename}"
                     )
                     return image_url
                 else:
@@ -242,90 +203,10 @@ async def generate_and_save_image_async(
         except Exception as upload_error:
             # If Azure upload raises an exception, fall back to local storage
             logger.error(
-                f"❌ Error uploading to Azure for image {prompt_index + 1}: {upload_error}"
+                f"Error uploading to Azure for image {prompt_index + 1}: {upload_error}"
             )
             return await upload_to_local_fallback(image_bytes, filename)
 
     except Exception as e:
-        logger.error(f"❌ Error generating image {prompt_index + 1}: {e}")
+        logger.error(f"Error generating image {prompt_index + 1}: {e}")
         return "https://via.placeholder.com/800x600?text=Error"
-
-
-def find_image_jobs_recursively(data: Any, path: str = "root") -> List[Dict[str, Any]]:
-    """
-    Recursively find all image blocks with prompts in the placestory JSON.
-    """
-    jobs = []
-
-    if isinstance(data, dict):
-        if data.get("type") == "image" and data.get("payload", {}).get("image_prompt"):
-
-            jobs.append(
-                {
-                    "prompt": data["payload"]["image_prompt"],
-                    "source_obj": data["payload"]["source"],
-                    "payload_obj": data["payload"],
-                    "block_id": data.get("id", "unknown"),
-                    "path": path,
-                }
-            )
-            logger.debug(f"Found image prompt at {path}: {data.get('id')}")
-
-        for key, value in data.items():
-            jobs.extend(find_image_jobs_recursively(value, f"{path}.{key}"))
-
-    elif isinstance(data, list):
-        for i, item in enumerate(data):
-            jobs.extend(find_image_jobs_recursively(item, f"{path}[{i}]"))
-
-    return jobs
-
-
-async def process_placestory_images(
-    placestory_json: Dict[str, Any], tool_context: ToolContext
-) -> Dict[str, Any]:
-    """
-    Find prompts, generate, upload via Manager, and strip prompts.
-    """
-    logger.info("🔍 Searching for image prompts in placestory...")
-
-    image_jobs = find_image_jobs_recursively(placestory_json)
-
-    if not image_jobs:
-        logger.info("No image prompts found to process.")
-        return placestory_json
-
-    logger.info(f"Found {len(image_jobs)} image(s) to generate and upload")
-
-    await _send_placestory_status(
-        tool_context,
-        step_id="process_images",
-        label="Generating PlaceStory images",
-        status="in_progress",
-        details=f"Generating {len(image_jobs)} images for the PlaceStory.",
-    )
-
-    tasks = [
-        generate_and_save_image_async(job["prompt"], i)
-        for i, job in enumerate(image_jobs)
-    ]
-
-    generated_urls = await asyncio.gather(*tasks)
-
-    for i, job in enumerate(image_jobs):
-        url = generated_urls[i]
-        logger.info(f"🔄 Updating URL for {job['block_id']}: {url}")
-
-        job["source_obj"]["url"] = url
-
-        if "image_prompt" in job["payload_obj"]:
-            del job["payload_obj"]["image_prompt"]
-
-    await _send_placestory_status(
-        tool_context,
-        step_id="process_images",
-        status="done",
-    )
-
-    logger.info(f"✅ Successfully processed {len(image_jobs)} images")
-    return placestory_json

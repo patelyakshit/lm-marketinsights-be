@@ -23,7 +23,6 @@ from google.adk.runners import Runner
 from google.genai import types
 
 from agents.gis_agent import GISAgent
-from agents.placestory_agent import PlaceStoryAgent
 from agents.salesforce_agent import SalesforceAgent
 from agents.rag_agent import RAGAgent
 from agents.marketing_agent import MarketingAgent
@@ -82,7 +81,6 @@ class RootAgent(LlmAgent):
             sub_agents=[
                 SalesforceAgent(model, allow_override=allow_sub_agent_override),
                 GISAgent(model, allow_override=allow_sub_agent_override),
-                PlaceStoryAgent(model, allow_override=allow_sub_agent_override),
                 RAGAgent(model, allow_override=allow_sub_agent_override),
                 MarketingAgent(model, allow_override=allow_sub_agent_override),
             ],
@@ -103,14 +101,13 @@ class RootAgent(LlmAgent):
         Compressed for faster inference (~40% token reduction).
         """
 
-        return """You orchestrate specialized agents for Salesforce CRM, GIS, RAG, PlaceStory, and Marketing tasks.
+        return """You orchestrate specialized agents for Salesforce CRM, GIS, RAG, and Marketing tasks.
 
 ## Agents & Routing
 
 **GIS**: Map ops (zoom/pan/layers/pins), geocoding, spatial queries, TRADE AREA analysis (drive time, radius), lifestyle/segment analysis for locations, DATA QUERIES about any geographic/market data (rent, demographics, population, housing, etc).
 **Salesforce**: SOQL/SOSL, Salesforce objects (Account/Contact/Lead/Opportunity/__c), data exports, SF mapping.
 **RAG**: ArcGIS Tapestry segmentation knowledge (segment codes like 1A, 2B, I3), LifeMode groups (A-L), segment characteristics.
-**PlaceStory**: Location narratives, place reports, market analysis stories.
 **Marketing**: Social media posts (FB/LinkedIn/IG), email campaigns, tapestry-targeted content.
 
 ## Quick Route
@@ -118,7 +115,6 @@ class RootAgent(LlmAgent):
 - Map navigation/layers/pins → GIS
 - "drive time"/"drive-time"/"radius"/"nearby lifestyles"/"trade area"/"within X minutes" + address → GIS (use geocode then create_drive_time_polygon)
 - Tapestry segment codes (1A, 2B, I3), LifeMode groups, "what is segment X" → RAG
-- "placestory"/"create story"/"market analysis" → PlaceStory
 - "marketing post"/"social media"/"create post" → Marketing
 - **DATA QUESTIONS** (rent, demographics, housing, market data, population, income, etc.) → GIS (uses dynamic layer discovery)
 - **STORE/LOCATION QUERIES** ("zoom to store X", "find store X", "go to store X") → GIS (queries Stores layer directly from map)
@@ -192,8 +188,6 @@ When user asks to create a marketing post AFTER a lifestyle/tapestry analysis:
             "Thinking token transparency",
             "RAG agent for ArcGIS tapestry knowledge base 2025",
             "ADK sub-agent integration",
-            "Placestory generation from context",
-            "Conversation with the user to collect placestory context",
             "Marketing post generation with tapestry insights",
             "Platform-specific social media content creation",
         ]

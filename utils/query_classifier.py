@@ -80,7 +80,7 @@ class QueryClassifier:
             r"\b(export|download|save|create|generate|make)\b",
             r"\b(run|execute|perform|do)\b",
             r"\b(report|csv|geojson|pdf)\b",
-            r"\b(placestory|marketing\s+post|social\s+media)\b",
+            r"\b(marketing\s+post|social\s+media)\b",
         ],
         QueryType.CLARIFICATION: [
             r"^(yes|no|yeah|nope|sure|okay|ok|correct|right)(\s|!|\.|,|$)",

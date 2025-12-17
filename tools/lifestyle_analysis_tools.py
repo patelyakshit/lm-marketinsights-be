@@ -8,6 +8,7 @@ Provides comprehensive tapestry/lifestyle segmentation analysis with:
 - Business recommendations based on segment mix
 """
 
+import asyncio
 import json
 import logging
 import math
@@ -909,7 +910,7 @@ Be specific and practical. Include one concrete channel or tactic recommendation
 Return ONLY the 50-word insight, no introduction or labels."""
 
         response = client.models.generate_content(
-            model="gemini-2.0-flash",
+            model="gemini-2.5-flash-lite",  # Fast model for quick insights
             contents=[genai_types.Content(role="user", parts=[genai_types.Part(text=prompt)])]
         )
 
@@ -956,7 +957,7 @@ Write as flowing prose, not bullet points. Wrap 2-3 key phrases in <strong> tags
 Return ONLY the paragraph, no introduction or labels."""
 
         response = client.models.generate_content(
-            model="gemini-2.0-flash",
+            model="gemini-2.5-flash-lite",  # Fast model for quick insights
             contents=[genai_types.Content(role="user", parts=[genai_types.Part(text=prompt)])]
         )
 
@@ -1100,13 +1101,32 @@ async def get_lifestyle_analysis(
             "message": "Could not parse segment data from response"
         })
 
-    # Step 3: Generate AI insights for each segment
-    logger.info(f"Generating insights for {len(segments)} segments...")
-    for segment in segments:
-        segment.insight = await generate_segment_insight(segment, business_type)
+    # Step 3: Generate AI insights for all segments IN PARALLEL (major speed improvement)
+    logger.info(f"Generating insights for {len(segments)} segments in parallel...")
 
-    # Step 4: Generate overall business insight
-    business_insight = await generate_business_insight(segments, business_type)
+    # Create tasks for all segment insights + business insight
+    segment_tasks = [generate_segment_insight(segment, business_type) for segment in segments]
+    business_task = generate_business_insight(segments, business_type)
+
+    # Run all tasks in parallel
+    all_results = await asyncio.gather(*segment_tasks, business_task, return_exceptions=True)
+
+    # Assign segment insights (first N results)
+    for i, segment in enumerate(segments):
+        result = all_results[i]
+        if isinstance(result, Exception):
+            logger.error(f"Error generating insight for segment {segment.code}: {result}")
+            segment.insight = f"Target {segment.name} customers with messaging that resonates with their lifestyle."
+        else:
+            segment.insight = result
+
+    # Business insight is the last result
+    business_result = all_results[-1]
+    if isinstance(business_result, Exception):
+        logger.error(f"Error generating business insight: {business_result}")
+        business_insight = "Analyze the segment mix to develop targeted marketing strategies."
+    else:
+        business_insight = business_result
 
     # Step 5: Build report
     report = LifestyleReport(

@@ -143,6 +143,11 @@ Return ONLY a JSON object with this exact structure:
 
 Return ONLY the JSON object, no markdown, no code blocks, no additional text."""
 
+        # Rate limiting to prevent 429 errors
+        estimated_tokens = estimate_tokens(prompt)
+        rate_limiter = get_rate_limiter()
+        await rate_limiter.acquire(estimated_tokens)
+
         response = client.models.generate_content(
             model=model_name,
             contents=[
@@ -267,6 +272,11 @@ Example format:
 
 Return ONLY the JSON array, no markdown, no code blocks."""
 
+        # Rate limiting to prevent 429 errors
+        estimated_tokens = estimate_tokens(prompt)
+        rate_limiter = get_rate_limiter()
+        await rate_limiter.acquire(estimated_tokens)
+
         response = client.models.generate_content(
             model=model_name,
             contents=[
@@ -365,6 +375,11 @@ Example format:
 
 Return ONLY the JSON array, no markdown, no code blocks."""
 
+        # Rate limiting to prevent 429 errors
+        estimated_tokens = estimate_tokens(prompt)
+        rate_limiter = get_rate_limiter()
+        await rate_limiter.acquire(estimated_tokens)
+
         response = client.models.generate_content(
             model=model_name,
             contents=[
@@ -461,6 +476,11 @@ Example format:
 ]
 
 Return ONLY the JSON array, no markdown, no code blocks."""
+
+        # Rate limiting to prevent 429 errors
+        estimated_tokens = estimate_tokens(prompt)
+        rate_limiter = get_rate_limiter()
+        await rate_limiter.acquire(estimated_tokens)
 
         response = client.models.generate_content(
             model=model_name,
@@ -559,6 +579,11 @@ Example format:
 
 Return ONLY the JSON array, no markdown, no code blocks."""
 
+        # Rate limiting to prevent 429 errors
+        estimated_tokens = estimate_tokens(prompt)
+        rate_limiter = get_rate_limiter()
+        await rate_limiter.acquire(estimated_tokens)
+
         response = client.models.generate_content(
             model=model_name,
             contents=[
@@ -656,6 +681,11 @@ Example format:
 
 Return ONLY the JSON array, no markdown, no code blocks."""
 
+        # Rate limiting to prevent 429 errors
+        estimated_tokens = estimate_tokens(prompt)
+        rate_limiter = get_rate_limiter()
+        await rate_limiter.acquire(estimated_tokens)
+
         response = client.models.generate_content(
             model=model_name,
             contents=[
@@ -752,6 +782,11 @@ Generate a concise, compelling key message (1-2 sentences) that:
 4. Captures the essence of what we want to communicate
 
 Return ONLY the key message text, no markdown, no code blocks, no additional explanation."""
+
+        # Rate limiting to prevent 429 errors
+        estimated_tokens = estimate_tokens(prompt)
+        rate_limiter = get_rate_limiter()
+        await rate_limiter.acquire(estimated_tokens)
 
         response = client.models.generate_content(
             model=model_name,
@@ -873,6 +908,11 @@ Return ONLY a JSON object with this structure:
 }}
 
 Return ONLY the JSON object, no markdown, no code blocks."""
+
+        # Rate limiting to prevent 429 errors
+        estimated_tokens = estimate_tokens(prompt)
+        rate_limiter = get_rate_limiter()
+        await rate_limiter.acquire(estimated_tokens)
 
         response = client.models.generate_content(
             model=model_name,

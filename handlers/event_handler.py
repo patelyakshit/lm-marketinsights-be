@@ -267,7 +267,7 @@ class UnifiedEventHandler:
         """
         agent_name = (
             event.author
-        )  # e.g., "gis_agent", "salesforce_agent", "placestory_agent"
+        )  # e.g., "gis_agent", "salesforce_agent"
         tool_name = part.function_response.name
         tool_result = part.function_response.response.get("result", "")
         invocation_id = getattr(event, "invocation_id", None)
@@ -389,78 +389,6 @@ class UnifiedEventHandler:
         except Exception as e:
             logger.error(f"Error sending Salesforce operation data: {e}")
 
-    async def _handle_placestory_tool(
-        self, tool_name: str, tool_result: Any, is_last_tool: bool
-    ) -> None:
-        """
-        Handle PlaceStory agent tool execution.
-
-        Sends PLACESTORY_GENERATED operation when placestory is generated:
-        - generate_placestory_from_context_tool
-        """
-        if tool_name not in [
-            "generate_placestory_from_context_tool",
-            "generate_placestory_from_context",
-        ]:
-            return
-
-        try:
-
-            if isinstance(tool_result, str):
-                if not tool_result.strip():
-                    logger.warning(
-                        "PlaceStory tool_result is empty string, skipping operation send."
-                    )
-                    return
-
-                try:
-                    tool_response_json = json.loads(tool_result)
-                except json.JSONDecodeError as e:
-                    logger.error(
-                        f"PlaceStory tool_result is not valid JSON: {e}. "
-                        f"Raw: {tool_result[:200]!r}"
-                    )
-                    return
-            else:
-                tool_response_json = tool_result
-
-            if "operations" in tool_response_json:
-                await self.manager.send_operations_data(
-                    self.connection_id, tool_response_json
-                )
-                logger.info(
-                    f"Sent PLACESTORY_GENERATED operation (Direct Pass-through) for tool: {tool_name}"
-                )
-                return
-
-            if tool_response_json.get("status") == "ok":
-                placestory_data = tool_response_json.get("placestory", {})
-
-                if placestory_data:
-                    operation_data = {
-                        "operations": [
-                            {
-                                "type": "PLACESTORY_GENERATED",
-                                "payload": placestory_data,
-                            }
-                        ]
-                    }
-
-                    await self.manager.send_operations_data(
-                        self.connection_id, operation_data
-                    )
-
-                    logger.info(
-                        f"Sent PLACESTORY_GENERATED operation for tool: {tool_name}"
-                    )
-            elif tool_response_json.get("status") == "error":
-                logger.warning(
-                    f"PlaceStory generation had error: {tool_response_json.get('reason')}"
-                )
-
-        except Exception as e:
-            logger.error(f"Error sending PlaceStory operation data: {e}")
-
     async def _flush_cached_tools(self, invocation_id: str) -> None:
         """
         Flush cached tool results for an invocation.
@@ -496,9 +424,6 @@ class UnifiedEventHandler:
 
             if agent_name == "salesforce_agent":
                 handler_tasks.append(self._handle_salesforce_tool(tool_name, tool_result, is_last_tool))
-
-            if agent_name == "placestory_agent":
-                handler_tasks.append(self._handle_placestory_tool(tool_name, tool_result, is_last_tool))
 
             # Marketing agent returns text directly, no special handling needed
 
