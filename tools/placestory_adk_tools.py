@@ -14,6 +14,9 @@ from tools.placestory_tools import _send_placestory_status, format_execution_tim
 from google.genai import types as genai_types
 from utils.genai_client_manager import get_genai_client
 from utils.image_generator import process_placestory_images
+from utils.context_reducer import summarize_statistical_profile, reduce_context_size
+from utils.rate_limiter import get_rate_limiter, estimate_tokens
+from utils.error_handlers import ErrorRecovery
 import time
 
 logger = logging.getLogger(__name__)
@@ -196,10 +199,18 @@ async def generate_placestory_from_context(tool_context: ToolContext) -> Dict[st
         details="Preparing LLM context for PlaceStory generation.",
     )
 
+    # Reduce statistical profile size to prevent token limit issues
+    if statistical_profile:
+        statistical_profile = summarize_statistical_profile(statistical_profile, max_length=1500)
+        logger.info(f"Reduced statistical profile size to {len(statistical_profile)} chars")
+
     llm_context: Dict[str, Any] = {
         **context,
         "statistical_profile": statistical_profile,
     }
+
+    # Reduce overall context size if needed
+    llm_context = reduce_context_size(llm_context, max_total_chars=5000)
 
     model_name = "gemini-2.5-pro"
 
@@ -225,15 +236,38 @@ async def generate_placestory_from_context(tool_context: ToolContext) -> Dict[st
         details="Using Gemini to generate PlaceStory content fromt the captured context.",
     )
 
-    response = client.models.generate_content(
-        model=model_name,
-        contents=[
-            genai_types.Content(
-                role="user",
-                parts=[genai_types.Part(text=full_prompt)],
+    # Estimate tokens and acquire rate limiter permission
+    estimated_tokens = estimate_tokens(full_prompt)
+    rate_limiter = get_rate_limiter()
+    await rate_limiter.acquire(estimated_tokens)
+
+    # Make API call with 429 error handling
+    max_retries = 3
+    for attempt in range(max_retries):
+        try:
+            response = client.models.generate_content(
+                model=model_name,
+                contents=[
+                    genai_types.Content(
+                        role="user",
+                        parts=[genai_types.Part(text=full_prompt)],
+                    )
+                ],
             )
-        ],
-    )
+            break  # Success, exit retry loop
+        except Exception as e:
+            # Check if it's a 429 error
+            if ErrorRecovery.is_429_error(e):
+                if attempt < max_retries - 1:
+                    logger.warning(f"429 error on attempt {attempt + 1}, handling backoff...")
+                    await ErrorRecovery.handle_429_error(e)
+                    continue
+                else:
+                    logger.error(f"429 error after {max_retries} attempts, giving up")
+                    raise
+            else:
+                # Not a 429 error, re-raise immediately
+                raise
 
     text = ""
     for c in response.candidates or []:

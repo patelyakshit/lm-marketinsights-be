@@ -1,3 +1,4 @@
+import asyncio
 import json
 import logging
 import traceback
@@ -144,6 +145,15 @@ def log_error_to_session(
         logger.error(f"Failed to log error to session: {e}")
 
 
+class RateLimitError(Exception):
+    """Exception raised when rate limit is exceeded."""
+    
+    def __init__(self, message: str, retry_after: Optional[float] = None):
+        self.message = message
+        self.retry_after = retry_after
+        super().__init__(message)
+
+
 class ErrorRecovery:
     """Handles error recovery strategies"""
 
@@ -173,3 +183,62 @@ class ErrorRecovery:
         max_delay = 60.0
         delay = base_delay * (2**attempt_count)
         return min(delay, max_delay)
+    
+    @staticmethod
+    async def handle_429_error(error: Exception, retry_after: Optional[float] = None) -> None:
+        """
+        Handle 429 Rate Limit errors with proper backoff.
+        
+        Args:
+            error: The exception that was raised
+            retry_after: Optional retry delay from API response (in seconds)
+        """
+        # Extract retry_after from error if available
+        if retry_after is None:
+            # Try to extract from error details
+            if hasattr(error, 'details') and isinstance(error.details, dict):
+                retry_after = error.details.get('retry_delay')
+            elif hasattr(error, 'retry_after'):
+                retry_after = error.retry_after
+        
+        # Default to 60 seconds if not specified
+        wait_time = retry_after if retry_after is not None else 60.0
+        
+        # Add some jitter to prevent thundering herd
+        import random
+        jitter = random.uniform(0, 5)
+        wait_time += jitter
+        
+        logger.warning(
+            f"429 Rate Limit Error: Waiting {wait_time:.1f}s before retry. "
+            f"Error: {str(error)}"
+        )
+        
+        await asyncio.sleep(wait_time)
+    
+    @staticmethod
+    def is_429_error(error: Exception) -> bool:
+        """Check if an error is a 429 rate limit error."""
+        error_str = str(error).lower()
+        error_type = type(error).__name__
+        
+        # Check for 429 status code
+        if "429" in error_str or "resource_exhausted" in error_str:
+            return True
+        
+        # Check for rate limit indicators
+        rate_limit_indicators = [
+            "rate limit",
+            "quota exceeded",
+            "too many requests",
+            "resource_exhausted",
+        ]
+        
+        if any(indicator in error_str for indicator in rate_limit_indicators):
+            return True
+        
+        # Check error type
+        if "RateLimit" in error_type or "ResourceExhausted" in error_type:
+            return True
+        
+        return False

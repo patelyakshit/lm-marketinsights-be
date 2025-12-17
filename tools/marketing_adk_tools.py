@@ -15,6 +15,9 @@ from tools.rag_tools import retrieve_tapestry_insights_vertex_rag
 from utils.image_generator import generate_and_save_image_async
 from utils.Tommy_Prompt import get_tommy_context, get_tommy_logo_image
 from managers.websocket_manager import manager as ws_manager
+from utils.context_reducer import summarize_tapestry_insights, reduce_context_size
+from utils.rate_limiter import get_rate_limiter, estimate_tokens
+from utils.error_handlers import ErrorRecovery
 
 logger = logging.getLogger(__name__)
 
@@ -1041,6 +1044,8 @@ async def preview_marketing_content(tool_context: ToolContext) -> str:
 
     # Get tapestry insights
     tapestry_insights = await _get_tapestry_insights(tapestry_segment, tool_context)
+    # Reduce tapestry insights size to prevent token limit issues
+    tapestry_insights = summarize_tapestry_insights(tapestry_insights, max_length=1000)
 
     # Generate key message
     key_message = await _generate_key_message(
@@ -1088,10 +1093,37 @@ Generate ONLY ONE post with:
 
 Format as clean markdown, no JSON."""
 
-    response = client.models.generate_content(
-        model="gemini-2.5-flash",
-        contents=[genai_types.Content(role="user", parts=[genai_types.Part(text=prompt)])]
-    )
+    # Estimate tokens and acquire rate limiter permission
+    estimated_tokens = estimate_tokens(prompt)
+    rate_limiter = get_rate_limiter()
+    await rate_limiter.acquire(estimated_tokens)
+    
+    # Make API call with 429 error handling
+    max_retries = 3
+    response = None
+    for attempt in range(max_retries):
+        try:
+            response = client.models.generate_content(
+                model="gemini-2.5-flash",
+                contents=[genai_types.Content(role="user", parts=[genai_types.Part(text=prompt)])]
+            )
+            break  # Success, exit retry loop
+        except Exception as e:
+            # Check if it's a 429 error
+            if ErrorRecovery.is_429_error(e):
+                if attempt < max_retries - 1:
+                    logger.warning(f"429 error on attempt {attempt + 1}, handling backoff...")
+                    await ErrorRecovery.handle_429_error(e)
+                    continue
+                else:
+                    logger.error(f"429 error after {max_retries} attempts, giving up")
+                    raise
+            else:
+                # Not a 429 error, re-raise immediately
+                raise
+    
+    if response is None:
+        raise Exception("Failed to generate content after retries")
 
     text = ""
     for c in response.candidates or []:
@@ -1187,7 +1219,9 @@ async def generate_marketing_posts(tool_context: ToolContext) -> str:
     tapestry_insights = ""
     try:
         tapestry_insights = await _get_tapestry_insights(tapestry_segment, tool_context)
-        logger.info(f"Retrieved tapestry insights: {tapestry_insights[:200]}...")
+        # Reduce tapestry insights size to prevent token limit issues
+        tapestry_insights = summarize_tapestry_insights(tapestry_insights, max_length=1000)
+        logger.info(f"Retrieved and reduced tapestry insights: {len(tapestry_insights)} chars")
     except Exception as e:
         logger.error(f"Error retrieving tapestry insights: {e}")
         tapestry_insights = f"General insights for {tapestry_segment} segment"
@@ -1265,16 +1299,44 @@ async def generate_marketing_posts(tool_context: ToolContext) -> str:
     full_prompt = system_prompt + "\n\n" + user_prompt
 
     logger.info("Calling Gemini to generate marketing posts...")
-    logger.info(f"Full Prompt: {full_prompt}")
-    response = client.models.generate_content(
-        model=model_name,
-        contents=[
-            genai_types.Content(
-                role="user",
-                parts=[genai_types.Part(text=full_prompt)],
+    logger.info(f"Full Prompt length: {len(full_prompt)} chars")
+    
+    # Estimate tokens and acquire rate limiter permission
+    estimated_tokens = estimate_tokens(full_prompt)
+    rate_limiter = get_rate_limiter()
+    await rate_limiter.acquire(estimated_tokens)
+    
+    # Make API call with 429 error handling
+    max_retries = 3
+    response = None
+    for attempt in range(max_retries):
+        try:
+            response = client.models.generate_content(
+                model=model_name,
+                contents=[
+                    genai_types.Content(
+                        role="user",
+                        parts=[genai_types.Part(text=full_prompt)],
+                    )
+                ],
             )
-        ],
-    )
+            break  # Success, exit retry loop
+        except Exception as e:
+            # Check if it's a 429 error
+            if ErrorRecovery.is_429_error(e):
+                if attempt < max_retries - 1:
+                    logger.warning(f"429 error on attempt {attempt + 1}, handling backoff...")
+                    await ErrorRecovery.handle_429_error(e)
+                    continue
+                else:
+                    logger.error(f"429 error after {max_retries} attempts, giving up")
+                    raise
+            else:
+                # Not a 429 error, re-raise immediately
+                raise
+    
+    if response is None:
+        raise Exception("Failed to generate content after retries")
 
     # Extract response text
     text = ""
