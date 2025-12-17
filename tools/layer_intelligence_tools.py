@@ -12,8 +12,6 @@ import json
 import logging
 from typing import Optional
 
-from google.adk.tools import FunctionTool, ToolContext
-
 logger = logging.getLogger(__name__)
 
 
@@ -458,15 +456,16 @@ async def execute_structured_query(
 
 
 # =============================================================================
-# Create ADK FunctionTool wrappers
+# ADK tools - Using raw async functions for AFC compatibility
 # =============================================================================
 
-discover_data_layers_tool = FunctionTool(discover_data_layers)
-query_layer_natural_language_tool = FunctionTool(query_layer_with_natural_language)
-get_layer_details_tool = FunctionTool(get_layer_details)
-find_related_layers_tool = FunctionTool(find_related_layers)
-suggest_queries_tool = FunctionTool(suggest_queries_for_layer)
-execute_structured_query_tool = FunctionTool(execute_structured_query)
+# Raw async functions are directly compatible with Google ADK's automatic function calling
+discover_data_layers_tool = discover_data_layers
+query_layer_natural_language_tool = query_layer_with_natural_language
+get_layer_details_tool = get_layer_details
+find_related_layers_tool = find_related_layers
+suggest_queries_tool = suggest_queries_for_layer
+execute_structured_query_tool = execute_structured_query
 
 
 # Export list for easy integration

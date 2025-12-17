@@ -8,8 +8,6 @@ location-based queries with semantic RAG lookups.
 import logging
 from typing import Optional
 
-from google.adk.tools import FunctionTool
-
 from utils.spatial_rag import (
     spatial_rag_search,
     SpatialRAGSearch,
@@ -300,10 +298,10 @@ async def compare_locations(
         return f"Error comparing locations: {str(e)}"
 
 
-# Create ADK FunctionTools
-get_location_intelligence_tool = FunctionTool(get_location_intelligence)
-analyze_location_for_marketing_tool = FunctionTool(analyze_location_for_marketing)
-compare_locations_tool = FunctionTool(compare_locations)
+# Raw async functions for AFC compatibility (no FunctionTool wrappers)
+get_location_intelligence_tool = get_location_intelligence
+analyze_location_for_marketing_tool = analyze_location_for_marketing
+compare_locations_tool = compare_locations
 
 # Export all tools
 SPATIAL_RAG_TOOLS = [

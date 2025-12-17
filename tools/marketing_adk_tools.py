@@ -14,6 +14,7 @@ from utils.genai_client_manager import get_genai_client
 from tools.rag_tools import retrieve_tapestry_insights_vertex_rag
 from utils.image_generator import generate_and_save_image_async
 from utils.Tommy_Prompt import get_tommy_context, get_tommy_logo_image
+from managers.websocket_manager import manager as ws_manager
 
 logger = logging.getLogger(__name__)
 
@@ -1003,9 +1004,124 @@ async def update_marketing_context(
     )
 
 
+async def preview_marketing_content(tool_context: ToolContext) -> str:
+    """
+    Generate a PREVIEW of marketing content (text only, no images).
+
+    This is the fast step - generates content ideas for user approval.
+    After user confirms, call generate_marketing_posts() to generate images.
+
+    Args:
+        tool_context: ADK tool context with session information
+
+    Returns:
+        JSON string with content preview (no images yet)
+    """
+    session = tool_context.session
+    state = session.state
+    context: Dict[str, Any] = state.get("marketing_context", {}) or {}
+
+    # Validate required fields
+    tapestry_segment = context.get("tapestry_segment")
+    if not tapestry_segment:
+        return json.dumps({
+            "status": "error",
+            "message": "Please select a tapestry segment first."
+        })
+
+    selected_platform = context.get("selected_platform", "instagram")
+    selected_goal = context.get("selected_goal", "increase awareness")
+    selected_tone = context.get("selected_tone", "professional")
+    selected_offer = context.get("selected_offer", "")
+    selected_vibe = context.get("selected_vibe", "")
+    business_name = context.get("business_name", "")
+    business_type = context.get("business_type", "")
+
+    logger.info(f"Generating content preview for segment: {tapestry_segment}")
+
+    # Get tapestry insights
+    tapestry_insights = await _get_tapestry_insights(tapestry_segment, tool_context)
+
+    # Generate key message
+    key_message = await _generate_key_message(
+        tapestry_segment=tapestry_segment,
+        tapestry_insights=tapestry_insights,
+        selected_goal=selected_goal,
+        selected_offer=selected_offer,
+        selected_tone=selected_tone,
+        selected_vibe=selected_vibe,
+    )
+    context["key_message"] = key_message
+    session.state["marketing_context"] = context
+
+    # Generate content preview (text only)
+    client = get_genai_client()
+
+    prompt = f"""Generate marketing content for a specific business.
+
+CRITICAL: The content MUST be specifically about this business:
+- Business Name: **{business_name}**
+- Business Type: **{business_type}**
+{f"- Special Offer: **{selected_offer}**" if selected_offer else ""}
+
+Target Audience (Tapestry Segment): {tapestry_segment}
+Platform: {selected_platform}
+Campaign Goal: {selected_goal}
+Tone: {selected_tone}
+Vibe: {selected_vibe if selected_vibe else selected_tone}
+
+Segment Insights (use to understand audience):
+{tapestry_insights}
+
+REQUIREMENTS:
+1. The headline MUST include "{business_name}" or reference it directly
+2. The body copy MUST describe what "{business_name}" offers as a {business_type}
+3. All content must be relevant to a {business_type} business
+{f"4. Highlight the special offer: {selected_offer}" if selected_offer else ""}
+
+Generate ONLY ONE post with:
+1. **Headline** (MUST mention {business_name}, 5-10 words)
+2. **Body Copy** (2-3 sentences about {business_name}'s {business_type} services)
+3. **Call to Action** (visit {business_name}, try their services, etc.)
+4. **Hashtags** (3-5 relevant hashtags for {selected_platform} including #{business_name.replace(' ', '').replace("'", '')} if possible)
+5. **Image Suggestion** (describe ideal image showing {business_type} services)
+
+Format as clean markdown, no JSON."""
+
+    response = client.models.generate_content(
+        model="gemini-2.5-flash",
+        contents=[genai_types.Content(role="user", parts=[genai_types.Part(text=prompt)])]
+    )
+
+    text = ""
+    for c in response.candidates or []:
+        if c.content:
+            for p in c.content.parts or []:
+                if hasattr(p, "text"):
+                    text += p.text
+
+    # Store preview in context
+    context["content_preview"] = text.strip()
+    context["preview_approved"] = False
+    session.state["marketing_context"] = context
+
+    logger.info("Content preview generated successfully")
+
+    return json.dumps({
+        "status": "preview",
+        "platform": selected_platform,
+        "segment": tapestry_segment,
+        "content": text.strip(),
+        "message": "Here's your content preview! Say 'looks good' or 'generate it' to create the final post with images, or tell me what to change."
+    }, indent=2)
+
+
 async def generate_marketing_posts(tool_context: ToolContext) -> str:
     """
-    Generate platform-specific marketing posts based on collected context.
+    Generate platform-specific marketing posts WITH IMAGES.
+
+    Call this AFTER user approves the content preview from preview_marketing_content().
+    This step generates the actual images and sends to frontend.
 
     Workflow:
     1. Validate required fields (tapestry_segment)
@@ -1013,7 +1129,8 @@ async def generate_marketing_posts(tool_context: ToolContext) -> str:
     3. Auto-generate key_message from insights if not provided
     4. Determine best platforms based on demographics
     5. Generate optimized posts for each platform
-    6. Return in operations format for frontend display
+    6. Generate images for each post
+    7. Return in operations format for frontend display
 
     Args:
         tool_context: ADK tool context with session information
@@ -1186,8 +1303,42 @@ async def generate_marketing_posts(tool_context: ToolContext) -> str:
         posts_json = json.loads(text)
         logger.info("Successfully generated marketing posts")
 
-        # Step 5: Generate images for each platform post
+        # Step 4.5: Send MARKETING_GENERATION_STARTED immediately to open Studio with skeleton loaders
         posts = posts_json.get("posts", {})
+        connection_id = tool_context.state.get("connection_id")
+        if connection_id:
+            # Send initial posts without images - frontend will show skeleton loaders
+            initial_posts = []
+            for platform, post_data in posts.items():
+                initial_posts.append({
+                    "id": f"post-{uuid.uuid4().hex[:8]}",
+                    "platform": platform,
+                    "headline": post_data.get("subject_line", "") or post_data.get("content", "")[:50] + "...",
+                    "caption": post_data.get("content", ""),
+                    "hashtags": post_data.get("hashtags", []),
+                    "imageUrl": None,  # No image yet - will trigger skeleton loader
+                    "businessName": context.get("business_name"),
+                    "segmentName": tapestry_segment,
+                })
+
+            start_operation = {
+                "operations": [{
+                    "type": "MARKETING_GENERATION_STARTED",
+                    "payload": {
+                        "posts": initial_posts,
+                        "businessName": context.get("business_name"),
+                        "businessType": context.get("business_type"),
+                        "message": "Generating images for your marketing posts..."
+                    }
+                }]
+            }
+            try:
+                await ws_manager.send_operations_data(connection_id, start_operation)
+                logger.info(f"Sent MARKETING_GENERATION_STARTED operation - Studio will open with skeleton loaders")
+            except Exception as e:
+                logger.error(f"Failed to send start operation: {e}")
+
+        # Step 5: Generate images for each platform post
         image_index = 0
         for platform, post_data in posts.items():
             try:
@@ -1209,8 +1360,10 @@ async def generate_marketing_posts(tool_context: ToolContext) -> str:
                 else:
                     visual_desc = "engaging marketing image"
 
-                # Build base image prompt
-                image_prompt = f"Marketing image for {platform}: {key_message}. Target audience: {tapestry_segment}. Style: {selected_vibe if selected_vibe else selected_tone}. Include: {visual_desc}"
+                # Build base image prompt with business context
+                business_name = context.get("business_name", "")
+                business_type = context.get("business_type", "")
+                image_prompt = f"Professional marketing image for {business_name}, a {business_type}. {key_message}. Target audience: {tapestry_segment}. Style: {selected_vibe if selected_vibe else selected_tone}. Include: {visual_desc}. The image should clearly represent a {business_type} service."
 
                 # Add Tommy context and get logo image if enabled
                 context_image = None
@@ -1243,6 +1396,41 @@ async def generate_marketing_posts(tool_context: ToolContext) -> str:
                 logger.error(f"Error generating image for {platform}: {e}")
                 # Continue without image if generation fails
                 post_data["image_url"] = None
+
+        # Step 6: Emit MARKETING_POSTS_GENERATED operation to frontend
+        connection_id = tool_context.state.get("connection_id")
+        if connection_id:
+            # Format posts for frontend operation
+            marketing_posts = []
+            for platform, post_data in posts.items():
+                marketing_posts.append({
+                    "id": f"post-{uuid.uuid4().hex[:8]}",
+                    "platform": platform,
+                    "headline": post_data.get("subject_line", "") or post_data.get("content", "")[:50] + "...",
+                    "caption": post_data.get("content", ""),
+                    "hashtags": post_data.get("hashtags", []),
+                    "imageUrl": post_data.get("image_url"),
+                    "businessName": context.get("business_name"),
+                    "segmentName": tapestry_segment,
+                })
+
+            operation = {
+                "operations": [{
+                    "type": "MARKETING_POSTS_GENERATED",
+                    "payload": {
+                        "posts": marketing_posts,
+                        "businessName": context.get("business_name"),
+                        "businessType": context.get("business_type"),
+                    }
+                }]
+            }
+            try:
+                await ws_manager.send_operations_data(connection_id, operation)
+                logger.info(f"Sent MARKETING_POSTS_GENERATED operation with {len(marketing_posts)} posts")
+            except Exception as e:
+                logger.error(f"Failed to send marketing operation: {e}")
+        else:
+            logger.warning("No connection_id available, skipping MARKETING_POSTS_GENERATED operation")
 
         # Format posts as readable text response
         formatted_response = _format_posts_as_text(posts_json)
@@ -1655,6 +1843,7 @@ def _format_posts_as_text(posts_json: Dict[str, Any]) -> str:
 
 # Create ADK FunctionTool instances
 update_marketing_context_tool = FunctionTool(update_marketing_context)
+preview_marketing_content_tool = FunctionTool(preview_marketing_content)
 generate_marketing_posts_tool = FunctionTool(generate_marketing_posts)
 suggest_all_marketing_options_tool = FunctionTool(suggest_all_marketing_options)
 # Keep individual tools for backward compatibility, but prefer suggest_all_marketing_options

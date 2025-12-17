@@ -14,6 +14,7 @@ from typing import Dict, Any, List, Optional
 from google.adk.tools import ToolContext
 from decouple import config
 from PIL import Image
+from google import genai
 from google.genai import types as genai_types
 
 from utils.genai_client_manager import get_genai_client
@@ -21,6 +22,29 @@ from utils.azure_storage import AzureBlobStorageManager
 from tools.placestory_tools import _send_placestory_status
 
 logger = logging.getLogger(__name__)
+
+# Separate API key for image generation (Gemini 3 Pro Image)
+IMAGE_GEN_API_KEY = config(
+    "IMAGE_GEN_API_KEY",
+    default="AIzaSyBiDiReSuCV_ZvCD7YzqHlHkBF2lvXLCPw"
+)
+
+# Create a separate client for image generation using API key (NOT Vertex AI)
+_image_gen_client: Optional[genai.Client] = None
+
+def get_image_gen_client() -> genai.Client:
+    """Get or create a client specifically for image generation using API key.
+
+    IMPORTANT: Must use vertexai=False to force Google AI Studio endpoint.
+    The GOOGLE_GENAI_USE_VERTEXAI=1 env var would otherwise force Vertex AI,
+    which doesn't accept API keys.
+    """
+    global _image_gen_client
+    if _image_gen_client is None:
+        # Explicitly disable Vertex AI to use Google AI Studio with API key
+        _image_gen_client = genai.Client(api_key=IMAGE_GEN_API_KEY, vertexai=False)
+        logger.info("Created image generation client with API key (Google AI Studio, not Vertex AI)")
+    return _image_gen_client
 
 
 PLACESTORY_AZURE_ACCOUNT_KEY = config(
@@ -100,7 +124,8 @@ async def generate_and_save_image_async(
     logger.info(f"🎨 Generating image {prompt_index + 1}: '{prompt[:60]}...'")
 
     try:
-        client = get_genai_client()
+        # Use dedicated image generation client with API key for Gemini 3
+        client = get_image_gen_client()
 
         # Build contents list for multimodal input
         parts = [genai_types.Part(text=prompt)]
@@ -142,17 +167,21 @@ async def generate_and_save_image_async(
             response_modalities=["IMAGE"],
         )
 
+        # Use Gemini 3 Pro Image Preview for image generation with API key
+        # Must use vertexai=False in client to access Google AI Studio (not Vertex AI)
         response = client.models.generate_content(
-            model="gemini-2.5-flash-image",
+            model="gemini-3-pro-image-preview",
             contents=contents,
             config=config,
         )
 
+        # Extract image bytes from Gemini response
         image_bytes = None
-        for part in response.candidates[0].content.parts:
-            if part.inline_data is not None:
-                image_bytes = part.inline_data.data
-                break
+        if response.candidates and len(response.candidates) > 0:
+            for part in response.candidates[0].content.parts:
+                if part.inline_data is not None:
+                    image_bytes = part.inline_data.data
+                    break
 
         if not image_bytes:
             logger.warning(f"No image bytes found for prompt: {prompt[:40]}...")

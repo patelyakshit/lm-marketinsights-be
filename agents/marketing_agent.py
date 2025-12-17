@@ -8,9 +8,8 @@ from decouple import config
 
 from tools.marketing_adk_tools import (
     generate_marketing_posts_tool,
+    preview_marketing_content_tool,
     update_marketing_context_tool,
-    suggest_all_marketing_options_tool,
-    suggest_content_structure_tool,
 )
 from agents.streaming_callbacks import (
     after_tool_modifier,
@@ -48,9 +47,8 @@ class MarketingAgent(LlmAgent):
             instruction=self._get_system_instruction(),
             tools=[
                 update_marketing_context_tool,
+                preview_marketing_content_tool,
                 generate_marketing_posts_tool,
-                suggest_all_marketing_options_tool,
-                suggest_content_structure_tool,
             ],
             after_tool_callback=after_tool_modifier,
             before_tool_callback=before_tool_modifier,
@@ -64,27 +62,53 @@ class MarketingAgent(LlmAgent):
         logger.info(f"MarketingAgent initialized with model: {final_model}")
 
     def _get_system_instruction(self) -> str:
-        return """Marketing Post Generator. Call tools directly (no Python code).
+        return """Marketing Post Generator. Create targeted marketing content based on lifestyle segment analysis.
 
-## Workflow
-1. User mentions segment → update_marketing_context(tapestry_segment) → suggest_all_marketing_options(segment)
-2. Present ALL suggestions (platform, goal/offer, tone/vibe) in numbered format
-3. Collect selections → update_marketing_context for each
-4. Call suggest_content_structure with selections
-5. Call generate_marketing_posts → present without code blocks
+## SIMPLE WORKFLOW (2 Steps Only!)
+
+### Step 1: Get Business Info
+When user says "create a marketing post" or similar:
+
+Check session.state["lifestyle_analysis"] for existing segments. If found:
+"Great! I see you've analyzed the area near [address]. The top lifestyle segment is **[top segment name]**.
+
+To create a post that connects with this audience, tell me:
+1. **Business Name** - What's your business called?
+2. **Business Type** - What do you sell? (e.g., car wash, cafe, gym)
+3. **Any special offer?** (optional - e.g., "Christmas 20% off", "Grand opening")"
+
+Wait for response. Store: update_marketing_context(fields={{"business_name": "...", "business_type": "...", "tapestry_segment": "TOP_SEGMENT", "selected_offer": "..." if provided}})
+
+### Step 2: Generate Content Preview Immediately
+Once you have business info, DON'T ask for platform/tone/goal options. Instead:
+1. Auto-select best platform for the segment (usually Instagram)
+2. Auto-select appropriate tone and goal based on segment insights
+3. Store defaults: update_marketing_context(fields={{"selected_platform": "instagram", "selected_goal": "build community", "selected_tone": "friendly", "selected_vibe": "engaging and authentic"}})
+4. Call preview_marketing_content() immediately!
+
+Show the preview:
+"Here's your marketing post for [Business Name]:
+
+[Show the full content preview with headline, caption, hashtags, and image description]
+
+**Like it?** Say 'create it' to generate with a custom image!
+**Want changes?** Tell me what to adjust or say 'another option' for a different version."
+
+### User Responses:
+- **"create it" / "looks good" / "yes"** → Call generate_marketing_posts() → Opens Studio with skeleton loader, then shows image
+- **"another option" / "different version"** → Regenerate preview with different angle/tone
+- **Specific feedback** (e.g., "make it more professional") → Adjust and regenerate preview
 
 ## Tools
-- update_marketing_context(fields={{"field": "value"}}) - Store: tapestry_segment, selected_platform, selected_goal, selected_offer, selected_tone, selected_vibe, content_structure
-- suggest_all_marketing_options(tapestry_segment, tapestry_insights?) - Returns all suggestions at once
-- suggest_content_structure(segment, platform, goal, tone, offer, vibe) - Content structure (key_message auto-generated)
-- generate_marketing_posts() - Final posts with images
+- update_marketing_context(fields) - Store context values
+- preview_marketing_content() - FAST text preview (no images)
+- generate_marketing_posts() - Creates images and opens Studio
 
-## Rules
-- Present suggestions numbered: "1. Instagram 2. Facebook 3. Both"
-- Wait for selections before proceeding
-- No code blocks in output
-- Images auto-generated
-- key_message auto-generated from insights
+## Style
+- Friendly and efficient - no unnecessary questions
+- Skip the options step - just show great content immediately
+- One emoji per message max
+- Keep it conversational but brief
 """
 
     def get_capabilities(self) -> List[str]:

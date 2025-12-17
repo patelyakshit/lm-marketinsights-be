@@ -9,8 +9,6 @@ import logging
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Tuple
 
-from google.adk.tools import FunctionTool
-
 logger = logging.getLogger(__name__)
 
 # ArcGIS service URLs
@@ -442,13 +440,14 @@ async def analyze_trade_area_segments(
 
 
 # =============================================================================
-# ADK FUNCTION TOOLS
+# ADK FUNCTION TOOLS - Using raw async functions for AFC compatibility
 # =============================================================================
 
-create_drive_time_polygon_tool = FunctionTool(create_drive_time_polygon)
-create_radius_buffer_tool = FunctionTool(create_radius_buffer)
-create_multiple_drive_time_rings_tool = FunctionTool(create_multiple_drive_time_rings)
-analyze_trade_area_segments_tool = FunctionTool(analyze_trade_area_segments)
+# Raw async functions are directly compatible with Google ADK's automatic function calling
+create_drive_time_polygon_tool = create_drive_time_polygon
+create_radius_buffer_tool = create_radius_buffer
+create_multiple_drive_time_rings_tool = create_multiple_drive_time_rings
+analyze_trade_area_segments_tool = analyze_trade_area_segments
 
 TRADE_AREA_TOOLS = [
     create_drive_time_polygon_tool,

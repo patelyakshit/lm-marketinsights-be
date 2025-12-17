@@ -8,9 +8,8 @@ operation payloads that the frontend can interpret.
 import json
 import logging
 from typing import List, Optional
-from typing import List, Optional
 
-from google.adk.tools import FunctionTool, ToolContext
+from google.adk.tools import ToolContext
 from tools.gis_tools import gis_executor
 from tools.spatial_rag_tools import (
     get_location_intelligence_tool as spatial_rag_location_tool,
@@ -19,6 +18,7 @@ from tools.spatial_rag_tools import (
 )
 from tools.trade_area_tools import TRADE_AREA_TOOLS
 from tools.layer_intelligence_tools import LAYER_INTELLIGENCE_TOOLS
+from tools.lifestyle_analysis_tools import get_lifestyle_analysis_tool
 from utils.semantic_cache import semantic_cache_get, semantic_cache_set
 
 
@@ -581,26 +581,28 @@ async def identify_map_location(latitude: float, longitude: float) -> str:
 
 
 
-zoom_map_tool = FunctionTool(zoom_map)
-remove_layer_filter_tool = FunctionTool(remove_layer_filter)
-zoom_to_location_tool = FunctionTool(zoom_to_location)
-toggle_sublayer_visibility_tool = FunctionTool(toggle_sublayer_visibility)
-toggle_layer_visibility_tool = FunctionTool(toggle_layer_visibility)
-apply_layer_filter_tool = FunctionTool(apply_layer_filter)
-pan_map_tool = FunctionTool(pan_map)
-add_map_pin_tool = FunctionTool(add_map_pin)
-remove_map_pins_tool = FunctionTool(remove_map_pins)
-toggle_layer_labels_tool = FunctionTool(toggle_layer_labels)
-geocode_address_tool = FunctionTool(geocode_address)
-reverse_geocode_tool = FunctionTool(reverse_geocode_location)
-get_layer_statistics_tool = FunctionTool(get_layer_statistics)
-get_poi_location_intelligence_tool = FunctionTool(get_poi_location_intelligence)
-get_tapestry_segmentation_intelligence_tool = FunctionTool(get_tapestry_segmentation_intelligence)
-get_demographics_location_intelligence_tool = FunctionTool(get_demographics_location_intelligence)
-get_location_intelligence_tool = FunctionTool(get_location_intelligence)
-identify_map_location_tool = FunctionTool(identify_map_location)
+# Using raw async functions instead of FunctionTool wrappers to fix AFC compatibility
+zoom_map_tool = zoom_map
+remove_layer_filter_tool = remove_layer_filter
+zoom_to_location_tool = zoom_to_location
+toggle_sublayer_visibility_tool = toggle_sublayer_visibility
+toggle_layer_visibility_tool = toggle_layer_visibility
+apply_layer_filter_tool = apply_layer_filter
+pan_map_tool = pan_map
+add_map_pin_tool = add_map_pin
+remove_map_pins_tool = remove_map_pins
+toggle_layer_labels_tool = toggle_layer_labels
+geocode_address_tool = geocode_address
+reverse_geocode_tool = reverse_geocode_location
+get_layer_statistics_tool = get_layer_statistics
+get_poi_location_intelligence_tool = get_poi_location_intelligence
+get_tapestry_segmentation_intelligence_tool = get_tapestry_segmentation_intelligence
+get_demographics_location_intelligence_tool = get_demographics_location_intelligence
+get_location_intelligence_tool = get_location_intelligence
+identify_map_location_tool = identify_map_location
 
 
+# Using raw async functions for AFC compatibility (no FunctionTool wrappers)
 GIS_ADK_TOOLS = [
     # Layer operations
     toggle_layer_visibility_tool,
@@ -635,4 +637,6 @@ GIS_ADK_TOOLS = [
     *TRADE_AREA_TOOLS,
     # Layer Intelligence tools (dynamic layer discovery and querying)
     *LAYER_INTELLIGENCE_TOOLS,
+    # Comprehensive lifestyle analysis (top 5 segments with insights)
+    get_lifestyle_analysis_tool,
 ]
