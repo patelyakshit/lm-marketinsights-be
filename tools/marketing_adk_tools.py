@@ -1360,10 +1360,35 @@ async def generate_marketing_posts(tool_context: ToolContext) -> str:
                 else:
                     visual_desc = "engaging marketing image"
 
-                # Build base image prompt with business context
+                # Build professional marketing image prompt
                 business_name = context.get("business_name", "")
                 business_type = context.get("business_type", "")
-                image_prompt = f"Professional marketing image for {business_name}, a {business_type}. {key_message}. Target audience: {tapestry_segment}. Style: {selected_vibe if selected_vibe else selected_tone}. Include: {visual_desc}. The image should clearly represent a {business_type} service."
+                selected_offer = context.get("selected_offer", "")
+
+                # Professional marketing advertisement prompt structure
+                image_prompt = f"""Create a high-quality, professional social media marketing advertisement image for {platform}.
+
+BUSINESS: {business_name} - {business_type}
+HEADLINE: {key_message}
+{f"SPECIAL OFFER: {selected_offer}" if selected_offer else ""}
+TARGET AUDIENCE: {tapestry_segment}
+
+STYLE REQUIREMENTS:
+- Modern, clean, eye-catching design suitable for {platform} advertising
+- Professional photography or sleek graphic design aesthetic
+- Vibrant, attention-grabbing colors that pop on social media feeds
+- Clear visual hierarchy with space for text overlay
+- {selected_vibe if selected_vibe else selected_tone} mood and tone
+- Include visual elements: {visual_desc}
+
+IMAGE SPECIFICATIONS:
+- Square format (1:1 aspect ratio) optimized for social media
+- High contrast and saturation for mobile viewing
+- Professional lighting and composition
+- Should look like a paid advertisement, not a stock photo
+- Include subtle branding elements for {business_name}
+
+DO NOT include any text, logos, or watermarks in the image - just the visual content."""
 
                 # Add Tommy context and get logo image if enabled
                 context_image = None
