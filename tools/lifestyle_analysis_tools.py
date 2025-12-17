@@ -27,6 +27,10 @@ from managers.websocket_manager import manager as ws_manager
 
 logger = logging.getLogger(__name__)
 
+# Cached GIS connection (singleton pattern to avoid 8+ second reconnection overhead)
+_cached_gis_connection = None
+_cached_gis_token = None
+
 # ArcGIS API configuration
 ARCGIS_API_KEY = config("ARCGIS_API_KEY", default="")
 ARCGIS_USERNAME = config("ARCGIS_USERNAME", default="")
@@ -110,6 +114,55 @@ async def get_arcgis_oauth_token() -> str:
     except Exception as e:
         logger.error(f"Error generating OAuth token: {e}")
         return ARCGIS_API_KEY
+
+
+def get_cached_gis_connection():
+    """
+    Get or create a cached GIS connection.
+
+    This saves ~8 seconds per request by reusing the authenticated connection
+    instead of creating a new one every time.
+
+    Returns:
+        tuple: (GIS object, token string)
+    """
+    global _cached_gis_connection, _cached_gis_token
+
+    try:
+        from arcgis import GIS
+    except ImportError:
+        logger.error("arcgis package not installed")
+        return None, None
+
+    # Return cached connection if valid
+    if _cached_gis_connection is not None:
+        try:
+            # Quick validation - check if connection still works
+            if hasattr(_cached_gis_connection, '_con') and _cached_gis_connection._con.token:
+                logger.debug("Reusing cached GIS connection")
+                return _cached_gis_connection, _cached_gis_token
+        except Exception:
+            logger.warning("Cached GIS connection invalid, creating new one")
+            _cached_gis_connection = None
+            _cached_gis_token = None
+
+    # Create new connection
+    logger.info("Creating new GIS connection (will be cached)...")
+    try:
+        if ARCGIS_USERNAME and ARCGIS_PASSWORD:
+            _cached_gis_connection = GIS("https://www.arcgis.com", ARCGIS_USERNAME, ARCGIS_PASSWORD)
+            _cached_gis_token = _cached_gis_connection._con.token
+            logger.info(f"GIS connection cached - User: {_cached_gis_connection.users.me.username}")
+        else:
+            logger.warning("No ArcGIS credentials, trying anonymous access")
+            _cached_gis_connection = GIS()
+            _cached_gis_token = None
+
+        return _cached_gis_connection, _cached_gis_token
+
+    except Exception as e:
+        logger.error(f"Failed to create GIS connection: {e}")
+        return None, None
 
 
 # Segment colors by LifeMode group (matching MVP)
@@ -480,21 +533,12 @@ async def fetch_tapestry_from_feature_layer(
         as GeoEnrichment response for compatibility.
     """
     try:
-        from arcgis.gis import GIS
-    except ImportError:
-        logger.error("arcgis package not installed. Run: pip install arcgis")
-        return {"error": "arcgis package not installed"}
+        # Use cached GIS connection (saves ~8 seconds per request!)
+        gis, token = get_cached_gis_connection()
+        if gis is None:
+            return {"error": "Failed to connect to ArcGIS"}
 
-    try:
-        # Connect to ArcGIS Online with credentials
-        logger.info("Connecting to ArcGIS Online...")
-
-        if ARCGIS_USERNAME and ARCGIS_PASSWORD:
-            gis = GIS("https://www.arcgis.com", ARCGIS_USERNAME, ARCGIS_PASSWORD)
-            logger.info(f"Connected as: {gis.users.me.username}")
-        else:
-            logger.warning("No ArcGIS credentials, trying anonymous access")
-            gis = GIS()
+        logger.info(f"Connected as: {gis.users.me.username if hasattr(gis.users, 'me') else 'anonymous'}")
 
         # Ensure URL ends with layer ID (e.g., /0)
         base_url = TAPESTRY_FEATURE_LAYER_URL.rstrip("/")
@@ -503,8 +547,9 @@ async def fetch_tapestry_from_feature_layer(
 
         logger.info(f"Querying Tapestry feature layer: {base_url}")
 
-        # Get token for direct REST API calls (more reliable spatial filtering)
-        token = gis._con.token
+        # Use cached token or get fresh one if needed
+        if token is None and hasattr(gis, '_con'):
+            token = gis._con.token
 
         # Build query URL
         query_url = f"{base_url}/query"
