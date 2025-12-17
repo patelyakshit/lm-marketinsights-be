@@ -25,8 +25,9 @@ _initialized: bool = False
 _lock = threading.Lock()
 _using_api_key: bool = False
 
-# Default personal API key (Google AI Studio)
-DEFAULT_API_KEY = "AIzaSyBiDiReSuCV_ZvCD7YzqHlHkBF2lvXLCPw"
+# API key should be set via GOOGLE_API_KEY environment variable
+# Do NOT hardcode API keys - they will be flagged as leaked on GitHub
+DEFAULT_API_KEY = None  # Must be set via env var
 
 
 def initialize_genai_client(
@@ -67,11 +68,7 @@ def initialize_genai_client(
 
         try:
             # Check if we should use Vertex AI (from env var or parameter)
-            use_vertex_ai = use_vertex_ai or config("GOOGLE_GENAI_USE_VERTEXAI", default="0") == "1"
-
-            # OVERRIDE: Force API key mode for safety (disable Vertex AI)
-            # This ensures all calls go through personal API key
-            use_vertex_ai = False  # Force API key mode
+            use_vertex_ai = use_vertex_ai or config("GOOGLE_GENAI_USE_VERTEXAI", default="1") == "1"
 
             if use_vertex_ai:
                 # Vertex AI mode (service account)
@@ -93,8 +90,14 @@ def _initialize_api_key_client(api_key: Optional[str] = None) -> genai.Client:
     """Initialize client with Google AI Studio API key."""
     global _genai_client, _initialized, _using_api_key
 
-    # Get API key from parameter, env var, or default
-    api_key = api_key or config("GOOGLE_API_KEY", default=DEFAULT_API_KEY)
+    # Get API key from parameter or env var (REQUIRED)
+    api_key = api_key or config("GOOGLE_API_KEY", default="")
+
+    if not api_key:
+        raise RuntimeError(
+            "GOOGLE_API_KEY environment variable is required. "
+            "Get a key from https://aistudio.google.com/apikey and add to .env file."
+        )
 
     logger.info("=" * 80)
     logger.info("Initializing GenAI Client with Google AI Studio (API Key)")

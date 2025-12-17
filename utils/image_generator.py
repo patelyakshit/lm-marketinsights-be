@@ -19,10 +19,8 @@ from utils.azure_storage import AzureBlobStorageManager
 logger = logging.getLogger(__name__)
 
 # Separate API key for image generation (Gemini 3 Pro Image)
-IMAGE_GEN_API_KEY = config(
-    "IMAGE_GEN_API_KEY",
-    default="AIzaSyBiDiReSuCV_ZvCD7YzqHlHkBF2lvXLCPw"
-)
+# Must be set via IMAGE_GEN_API_KEY or GOOGLE_API_KEY env var
+IMAGE_GEN_API_KEY = config("IMAGE_GEN_API_KEY", default="") or config("GOOGLE_API_KEY", default="")
 
 # Create a separate client for image generation using API key (NOT Vertex AI)
 _image_gen_client: Optional[genai.Client] = None

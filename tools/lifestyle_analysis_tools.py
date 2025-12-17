@@ -902,8 +902,8 @@ async def generate_segment_insight(segment: SegmentData, business_type: str = ""
 Segment Profile:
 - LifeMode: {segment.lifemode_group}
 - Median Age: {segment.median_age or 'N/A'}
-- Median Income: ${segment.median_income:,.0f if segment.median_income else 'N/A'}
-- Homeownership: {segment.homeownership_rate * 100:.0f}% if segment.homeownership_rate else 'N/A'
+- Median Income: {f'${segment.median_income:,.0f}' if segment.median_income else 'N/A'}
+- Homeownership: {f'{segment.homeownership_rate * 100:.0f}%' if segment.homeownership_rate else 'N/A'}
 - Key traits: {', '.join(segment.characteristics[:3]) if segment.characteristics else 'N/A'}
 
 Be specific and practical. Include one concrete channel or tactic recommendation.
